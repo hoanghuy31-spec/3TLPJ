@@ -1,0 +1,62 @@
+name: Labeler
+
+on:
+  - pull_request
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          sync-labels: false
+
+# Labeler configuration
+labeler:
+  # Feature labels
+  feature:
+    - src/**/features/**
+    - src/**/feature-**
+    - feature/**/*
+    - '**/features/**'
+
+  # Bug fix labels
+  bug:
+    - src/**/fix/**
+    - fix/**/*
+    - '**/fix/**'
+    - '**/*fix*'
+
+  # Documentation labels
+  documentation:
+    - '**/*.md'
+    - docs/**
+    - '**/docs/**'
+
+  # Test labels
+  tests:
+    - '**/*.test.ts'
+    - '**/*.test.tsx'
+    - '**/*.spec.ts'
+    - '**/*.spec.tsx'
+    - test/**
+    - '**/tests/**'
+
+  # Client labels
+  client:
+    - client/**
+
+  # Server labels
+  server:
+    - server/**
+
+  # Shared labels
+  shared:
+    - shared/**
+
+  # CI/CD labels
+  ci-cd:
+    - .github/workflows/**
+    - '**/*.yml'
+    - '**/*.yaml'
