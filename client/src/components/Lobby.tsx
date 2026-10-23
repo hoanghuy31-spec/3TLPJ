@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Room } from '@uno/shared';
 import { GAME_CONFIG } from '@uno/shared';
+import { getSocket, SOCKET_EVENTS } from '../socket';
 
 interface LobbyProps {
   room: Room;
@@ -15,9 +16,9 @@ export default function Lobby({ room, playerId, onLeave, onToggleReady }: LobbyP
   const isHost = room.hostId === playerId;
   const currentPlayer = room.players.find(p => p.id === playerId);
   const isReady = currentPlayer?.isReady ?? false;
-  
-  const allReady = room.players.length >= GAME_CONFIG.MIN_PLAYERS && 
-    room.players.every(p => p.isReady || p.id === playerId);
+
+  const allReady = room.players.length >= GAME_CONFIG.MIN_PLAYERS &&
+    room.players.every(p => p.isReady);
 
   useEffect(() => {
     // Copy room code to clipboard
@@ -44,8 +45,8 @@ export default function Lobby({ room, playerId, onLeave, onToggleReady }: LobbyP
   };
 
   const handleStartGame = () => {
-    // TODO: Implement game start logic
-    console.log('Start game clicked');
+    if (!isHost || !allReady) return;
+    getSocket().emit(SOCKET_EVENTS.GAME_START);
   };
 
   return (
@@ -114,7 +115,7 @@ export default function Lobby({ room, playerId, onLeave, onToggleReady }: LobbyP
             <button 
               className="btn btn-primary start-btn"
               onClick={handleStartGame}
-              disabled={!allReady}
+              disabled={!isHost || !allReady}
             >
               {allReady ? 'Start Game' : 'Waiting for players to ready up...'}
             </button>

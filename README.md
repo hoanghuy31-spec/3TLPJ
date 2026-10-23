@@ -2,7 +2,7 @@
 
 Game bài trực tuyến theo thời gian thực, giống UNO. Nhiều người chơi cùng tham gia qua mạng.
 
-**Ghi chú quan trọng**: Dự án đang trong giai đoạn M0. Hiện tại đã có: tạo phòng, vào phòng, danh sách người chơi, chia bài. Các tính năng chơi bài thực tế (đánh bài, luân chuyển lượt, tính điểm) đang được phát triển ở M1 và M2.
+**Ghi chú quan trọng**: Nền tảng M0 đã hoàn thành. Hiện đã có tạo/vào phòng, danh sách người chơi, trạng thái sẵn sàng và khởi tạo ván (Host bắt đầu khi đủ người và tất cả đã sẵn sàng; server xáo và chia bài). Giao diện chơi bài, xử lý lượt, luật đánh bài và tính điểm vẫn đang được phát triển trong M1/M2.
 
 ## 1. Yêu Cầu Hệ Thống
 
@@ -127,6 +127,8 @@ Chạy tất cả trong thư mục gốc `2TLPJ/`:
 | `npm run dev --workspace=client` | Chỉ chạy client |
 | `npm test --workspace=server` | Chỉ test phần server (46 tests) |
 | `npm run build --workspace=shared` | Chỉ build phần shared |
+
+**Kiểm tra nhanh lobby bằng bot**: Khi server đang chạy và đã có phòng, chạy `node client/test-bots.js <MÃ_PHÒNG>` để thêm 3 bot vào phòng và đặt trạng thái sẵn sàng. Bot không tự tạo phòng hoặc bắt đầu game.
 
 ## 5. Làm Việc Nhóm Với Git
 
@@ -316,8 +318,8 @@ cd đường-dẫn-đến-2TLPJ
 
 | Giai đoạn | Nội dung | Người phụ trách |
 |-----------|----------|-----------------|
-| **M0** (xong) | Cấu trúc project, tạo/vào phòng, chia bài | Đã hoàn thành |
-| **M1** | Luật chơi (đánh bài, lượt chơi) | Cần làm |
+| **M0** (xong) | Cấu trúc project, tạo/vào phòng, sẵn sàng, chia bài | Đã hoàn thành |
+| **M1** | Khởi tạo game đã có; luật chơi, đánh bài và lượt chơi | Đang phát triển |
 | **M2** | Game hoàn chỉnh (UNO, điểm số) | Cần làm |
 | **M3** | Thêm tính năng (chat, avatar, âm thanh) | Tương lai |
 

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Lobby Start Game button now emits `game:start` and is enabled only for the host when the minimum player count is met and all players are ready.
+- Server now handles `game:start` by validating the request and initializing the first game state with a shuffled and dealt deck.
+- Added the optional `gameState` field to `Room` and aligned the `card:drawn` event type with the shared event constant.
+
 ### Added
 
 #### shared/
@@ -44,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `room:join` - Join existing room
   - `room:leave` - Leave current room
   - `room:ready` - Toggle ready status
+  - `game:start` - Host starts and initializes the game when all players are ready
 - **Auto-cleanup** on player disconnect
 - **Host transfer** when host leaves
 

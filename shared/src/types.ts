@@ -46,6 +46,7 @@ export interface Room {
   maxPlayers: number;            // Maximum players allowed (default: 4)
   status: RoomStatus;            // Current room status
   createdAt: number;             // Timestamp when room was created
+  gameState?: GameState;        // Optional active game state once a round starts
 }
 
 /**
@@ -114,7 +115,7 @@ export interface ServerToClientEvents {
   
   // Card events
   'card:played': (data: { playerId: string; card: Card; gameState: GameState }) => void;
-  'card: drawn': (data: { playerId: string; card: Card }) => void;
+  'card:drawn': (data: { playerId: string; card: Card }) => void;
   
   // UNO call
   'player:uno-called': (data: { playerId: string }) => void;

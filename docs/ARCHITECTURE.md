@@ -89,11 +89,13 @@
 ```
 1. Players join via room:join
 2. Players toggle ready via room:ready
-3. Host clicks Start when all ready
+3. Host clicks Start when at least the minimum number of players have joined and every player is ready
 4. Client → Server: game:start
-5. Server initializes game state
+5. Server validates the host and readiness, shuffles a standard deck, deals hands, and creates the initial game state
 6. Server → All Clients: game:started { gameState }
 ```
+
+The Lobby only enables the Start Game button for the host when these player-count and readiness conditions are met. Card-play, turn progression, and the game board are not implemented yet.
 
 ## Room State Machine
 

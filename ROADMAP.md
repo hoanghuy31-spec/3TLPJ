@@ -25,6 +25,7 @@
 - `dealCards()`, `createGamePlayers()`, `drawCards()`, `initializeRound()` (deal.ts)
 - `canPlayCard()`, `getPlayableCards()` (rules.ts) - placeholders
 - Socket.IO handlers for room:create, room:join, room:leave, room:ready
+- Host-only `game:start` handler validates player count/readiness, shuffles and deals cards, stores initial game state, and emits `game:started`
 - `/health` endpoint
 
 #### client/src/
@@ -55,8 +56,8 @@
   - Handle draw pile replenishment
 
 - [ ] **M1.A.5** Implement turn management in `server/src/index.ts`
-  - `game:start` event handler
-  - Turn validation, `turn:action` handler
+  - [x] Initial `game:start` handler (host/readiness checks and round initialization)
+  - [ ] Turn validation, `turn:action` handler
   - `card:play`, `card:draw` handlers
 
 - [ ] **M1.A.6** Implement UNO call validation

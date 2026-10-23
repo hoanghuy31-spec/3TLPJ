@@ -279,6 +279,7 @@ Document mapping of all exported functions, components, and types in the project
 - `SOCKET_EVENTS.ROOM_JOIN` (line 107)
 - `SOCKET_EVENTS.ROOM_LEAVE` (line 159)
 - `SOCKET_EVENTS.ROOM_READY` (line 164)
+- `SOCKET_EVENTS.GAME_START` - Host-only; requires the minimum player count and all players ready, then shuffles, deals, stores initial `GameState`, and emits `game:started`
 - `SOCKET_EVENTS.PING` (line 185)
 
 **HTTP Endpoints:**
@@ -320,7 +321,8 @@ Document mapping of all exported functions, components, and types in the project
 - **File:** `client/src/components/Lobby.tsx:13`
 - **Mô tả:** Sảnh chờ - hiển thị danh sách người chơi, nút ready
 - **Props:** `{ room, playerId, playerName, onLeave, onToggleReady }`
-- **Features:** Copy mã phòng, toggle ready, hiển thị empty slots
+- **Features:** Copy mã phòng, toggle ready, hiển thị empty slots; Host chỉ có thể bắt đầu khi đủ số người tối thiểu và mọi người đã ready
+- **Socket event:** Nút Start Game phát `SOCKET_EVENTS.GAME_START`
 - **Called by:** `App.tsx`
 
 ---
