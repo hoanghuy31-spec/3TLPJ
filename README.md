@@ -1,4 +1,4 @@
-# 🃏 2TLPJ - UNO
+# 🃏 3TLPJ - UNO
 
 Game bài trực tuyến theo thời gian thực, giống UNO. Nhiều người chơi cùng tham gia qua mạng.
 
