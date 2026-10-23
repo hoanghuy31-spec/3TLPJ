@@ -1,4 +1,4 @@
-# 🃏 2TLPJ - Game Bài Đa Người Chơi
+# 🃏 2TLPJ - UNO
 
 Game bài trực tuyến theo thời gian thực, giống UNO. Nhiều người chơi cùng tham gia qua mạng.
 
@@ -22,8 +22,7 @@ Trước khi bắt đầu, máy bạn cần:
 ### Bước 1: Tải code về máy
 
 ```powershell
-git clone <link-github-của-bạn>
-cd 2TLPJ
+git clone https://github.com/hoanghuy31-spec/3TLPJ
 ```
 
 ### Bước 2: Cài đặt thư viện
