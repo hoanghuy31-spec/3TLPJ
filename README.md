@@ -380,7 +380,7 @@ npm test
 
 ## 🤝 Đội Ngũ
 
-Dự án được phát triển bởi 3 thành viên.
+Dự án được phát triển bởi 4 thành viên.
 
 ## 📝 Đóng Góp
 
