@@ -89,6 +89,8 @@ export default function Lobby({
         background: currentTheme.bgGradient,
       }}
     >
+      <div className="lobby-ambient-glow glow-1" />
+      <div className="lobby-ambient-glow glow-2" />
       <div className="lobby-container">
         {/* Lobby Header */}
         <div className="lobby-header">
@@ -265,13 +267,39 @@ export default function Lobby({
       <style>{`
         .lobby-page {
           min-height: 100vh;
-          padding: 2rem 1.5rem;
+          padding: 2.5rem 1.5rem;
           transition: background 0.4s ease;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .lobby-ambient-glow {
+          position: absolute;
+          width: 500px;
+          height: 500px;
+          border-radius: 50%;
+          filter: blur(140px);
+          opacity: 0.25;
+          pointer-events: none;
+        }
+
+        .glow-1 {
+          top: -80px;
+          left: -80px;
+          background: #6366f1;
+        }
+
+        .glow-2 {
+          bottom: -80px;
+          right: -80px;
+          background: #f43f5e;
         }
 
         .lobby-container {
-          max-width: 820px;
+          max-width: 860px;
           margin: 0 auto;
+          position: relative;
+          z-index: 5;
         }
 
         .lobby-header {
@@ -280,124 +308,145 @@ export default function Lobby({
           align-items: center;
           margin-bottom: 2rem;
           flex-wrap: wrap;
-          gap: 1rem;
-          background: rgba(15, 23, 42, 0.7);
-          backdrop-filter: blur(12px);
-          padding: 1.25rem 1.75rem;
-          border-radius: 18px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          gap: 1.25rem;
+          background: rgba(15, 23, 42, 0.75);
+          backdrop-filter: blur(20px);
+          padding: 1.5rem 2rem;
+          border-radius: 24px;
+          border: 1.5px solid rgba(255, 255, 255, 0.14);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.15);
         }
 
         .room-title-row {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
-          margin-bottom: 0.35rem;
+          gap: 0.85rem;
+          margin-bottom: 0.45rem;
         }
 
         .room-title-row h1 {
-          font-size: 1.5rem;
+          font-size: 1.7rem;
           margin: 0;
-          font-weight: 800;
+          font-weight: 900;
+          letter-spacing: -0.02em;
         }
 
         .room-code {
           font-family: monospace;
-          background: rgba(79, 70, 229, 0.35);
-          color: #c7d2fe;
-          padding: 0.25rem 0.6rem;
-          border-radius: 6px;
-          letter-spacing: 0.12em;
-          border: 1px solid rgba(99, 102, 241, 0.4);
+          background: linear-gradient(135deg, rgba(79, 70, 229, 0.4) 0%, rgba(124, 58, 237, 0.4) 100%);
+          color: #e0e7ff;
+          padding: 0.35rem 0.85rem;
+          border-radius: 10px;
+          letter-spacing: 0.18em;
+          border: 1.5px solid rgba(165, 180, 252, 0.5);
+          box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+          font-size: 1.25rem;
+        }
+
+        .theme-indicator-row {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
         }
 
         .theme-pill {
-          font-size: 0.8rem;
-          color: #94a3b8;
-          background: rgba(255, 255, 255, 0.06);
-          padding: 0.2rem 0.6rem;
+          font-size: 0.85rem;
+          color: #cbd5e1;
+          background: rgba(255, 255, 255, 0.08);
+          padding: 0.25rem 0.75rem;
           border-radius: 999px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.12);
         }
 
         .header-actions {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 0.85rem;
         }
 
         .cosmetics-btn {
-          background: #312e81;
-          border-color: #6366f1;
-          color: #e0e7ff;
-          font-size: 0.85rem;
-          padding: 0.6rem 1rem;
+          background: linear-gradient(135deg, #312e81 0%, #4338ca 100%);
+          border-color: #818cf8;
+          color: #ffffff;
+          font-size: 0.9rem;
+          padding: 0.65rem 1.25rem;
           font-weight: 700;
+          box-shadow: 0 4px 15px rgba(67, 56, 202, 0.4);
         }
 
         .cosmetics-btn:hover {
-          background: #4338ca;
-          color: white;
+          background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6);
         }
 
         .copy-btn {
           font-size: 0.85rem;
-          padding: 0.4rem 0.85rem;
+          padding: 0.45rem 1rem;
+          border-radius: 10px;
         }
 
         .copy-btn.copied {
           background: #10b981;
           border-color: #10b981;
+          color: white;
+          box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
         }
 
         .leave-btn {
-          font-size: 0.85rem;
-          padding: 0.6rem 1rem;
+          font-size: 0.9rem;
+          padding: 0.65rem 1.25rem;
         }
 
         .players-section {
           background: rgba(15, 23, 42, 0.75);
-          backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 18px;
-          padding: 1.75rem;
+          backdrop-filter: blur(20px);
+          border: 1.5px solid rgba(255, 255, 255, 0.14);
+          border-radius: 24px;
+          padding: 2rem;
           margin-bottom: 2rem;
-          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
         }
 
         .players-section-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 1.25rem;
+          margin-bottom: 1.5rem;
         }
 
         .players-section h2 {
-          font-size: 1.25rem;
+          font-size: 1.4rem;
           margin: 0;
-          font-weight: 800;
+          font-weight: 900;
+          letter-spacing: -0.01em;
+          color: #f8fafc;
         }
 
         .add-bot-mini-btn {
-          font-size: 0.85rem;
-          padding: 0.45rem 1rem;
-          background: #4f46e5;
-          border-color: #818cf8;
+          font-size: 0.9rem;
+          padding: 0.5rem 1.25rem;
+          background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+          border-color: #a5b4fc;
           color: white;
-          font-weight: 700;
+          font-weight: 800;
+          box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
         }
 
         .add-bot-mini-btn:hover {
-          background: #4338ca;
+          background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(99, 102, 241, 0.6);
         }
 
         .slot-add-bot-btn {
-          font-size: 0.8rem;
-          padding: 0.35rem 0.85rem;
-          background: rgba(99, 102, 241, 0.25);
+          font-size: 0.85rem;
+          padding: 0.4rem 1rem;
+          background: rgba(99, 102, 241, 0.2);
           border-color: rgba(99, 102, 241, 0.5);
           color: #c7d2fe;
           font-weight: 700;
+          border-radius: 8px;
         }
 
         .slot-add-bot-btn:hover {
@@ -408,68 +457,77 @@ export default function Lobby({
         .players-list {
           display: flex;
           flex-direction: column;
-          gap: 0.85rem;
+          gap: 1rem;
         }
 
         .player-card {
           display: flex;
           align-items: center;
-          gap: 1.25rem;
-          padding: 1rem 1.25rem;
+          gap: 1.35rem;
+          padding: 1.15rem 1.5rem;
           background: rgba(255, 255, 255, 0.04);
-          border: 2px solid rgba(255, 255, 255, 0.08);
-          border-radius: 14px;
-          transition: all 0.2s ease;
+          border: 1.5px solid rgba(255, 255, 255, 0.08);
+          border-radius: 18px;
+          transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .player-card:hover {
+          background: rgba(255, 255, 255, 0.07);
+          transform: translateX(4px);
         }
 
         .player-card.current {
-          background: rgba(79, 70, 229, 0.18);
-          border-color: rgba(99, 102, 241, 0.6);
+          background: rgba(79, 70, 229, 0.16);
+          border-color: rgba(129, 140, 248, 0.6);
+          box-shadow: 0 4px 20px rgba(79, 70, 229, 0.25);
         }
 
         .player-card.ready {
-          border-left: 4px solid #10b981;
-          box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
+          border-left: 5px solid #10b981;
+          box-shadow: 0 4px 20px rgba(16, 185, 129, 0.2);
         }
 
         .player-card.empty {
-          opacity: 0.65;
-          border: 2px dashed rgba(255, 255, 255, 0.15);
+          opacity: 0.6;
+          border: 2px dashed rgba(255, 255, 255, 0.16);
+          background: transparent;
         }
 
         .player-avatar {
-          width: 52px;
-          height: 52px;
+          width: 56px;
+          height: 56px;
           border-radius: 50%;
           background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.6rem;
+          font-size: 1.8rem;
           flex-shrink: 0;
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+          border: 2px solid rgba(255, 255, 255, 0.2);
         }
 
         .avatar-emoji-span {
-          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
         }
 
         .player-avatar.empty-avatar {
-          background: rgba(255, 255, 255, 0.08);
-          color: rgba(255, 255, 255, 0.4);
-          font-size: 1.35rem;
+          background: rgba(255, 255, 255, 0.06);
+          color: rgba(255, 255, 255, 0.35);
+          font-size: 1.4rem;
+          border: 2px dashed rgba(255, 255, 255, 0.2);
         }
 
         .player-info {
           flex: 1;
           display: flex;
           flex-direction: column;
-          gap: 0.2rem;
+          gap: 0.3rem;
         }
 
         .player-name {
-          font-weight: 700;
-          font-size: 1rem;
+          font-weight: 800;
+          font-size: 1.05rem;
           display: flex;
           align-items: center;
           gap: 0.5rem;
@@ -478,85 +536,124 @@ export default function Lobby({
 
         .host-badge {
           font-size: 0.7rem;
-          background: #f59e0b;
-          color: black;
-          padding: 0.15rem 0.5rem;
+          background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+          color: #ffffff;
+          padding: 2px 8px;
+          border-radius: 999px;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          box-shadow: 0 2px 6px rgba(217, 119, 6, 0.4);
+        }
+
+        .you-badge {
+          font-size: 0.7rem;
+          background: #4f46e5;
+          color: white;
+          padding: 2px 8px;
           border-radius: 999px;
           font-weight: 800;
         }
 
         .bot-badge {
           font-size: 0.7rem;
-          background: #3b82f6;
+          background: #0284c7;
           color: white;
-          padding: 0.15rem 0.5rem;
+          padding: 2px 8px;
           border-radius: 999px;
           font-weight: 800;
         }
 
-        .empty-name {
-          color: rgba(255, 255, 255, 0.45);
-          font-style: italic;
+        .skin-tag {
+          font-size: 0.75rem;
+          color: #94a3b8;
+          font-weight: 600;
         }
 
         .player-status {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .ready-pill {
           font-size: 0.85rem;
+          font-weight: 800;
+          padding: 0.35rem 0.95rem;
+          border-radius: 999px;
+          border: 1px solid transparent;
         }
 
-        .ready-text {
+        .ready-pill.ready {
+          background: rgba(16, 185, 129, 0.2);
           color: #34d399;
-          font-weight: 700;
+          border-color: rgba(16, 185, 129, 0.4);
         }
 
-        .not-ready-text {
+        .ready-pill.waiting {
+          background: rgba(255, 255, 255, 0.06);
           color: #94a3b8;
+          border-color: rgba(255, 255, 255, 0.1);
         }
 
         .ready-btn {
-          font-size: 0.9rem;
-          padding: 0.6rem 1.25rem;
-          border-radius: 10px;
+          font-size: 0.95rem;
+          padding: 0.6rem 1.4rem;
+          border-radius: 12px;
+          font-weight: 800;
+        }
+
+        .ready-btn.is-ready {
+          background: #10b981;
+          color: white;
+          box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
         }
 
         .lobby-actions {
-          text-align: center;
+          display: flex;
+          justify-content: center;
         }
 
         .host-actions-group {
           display: flex;
-          gap: 1rem;
-          justify-content: center;
           align-items: center;
-          flex-wrap: wrap;
+          gap: 1.25rem;
+          width: 100%;
         }
 
         .add-bot-btn {
-          padding: 1rem 1.75rem;
-          font-size: 1.05rem;
-          background: #312e81;
-          border-color: #6366f1;
-          border-radius: 12px;
-          color: white;
-          font-weight: 700;
-        }
-
-        .add-bot-btn:hover {
-          background: #4338ca;
+          padding: 1.15rem 1.75rem;
+          font-size: 1rem;
+          border-radius: 16px;
         }
 
         .start-btn {
-          padding: 1rem 3rem;
-          font-size: 1.15rem;
-          border-radius: 12px;
           flex: 1;
-          min-width: 260px;
-          font-weight: 800;
+          padding: 1.15rem 2rem;
+          font-size: 1.15rem;
+          border-radius: 16px;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          border-color: #6ee7b7;
+          box-shadow: 0 6px 25px rgba(16, 185, 129, 0.45);
+        }
+
+        .start-btn:hover:not(:disabled) {
+          background: linear-gradient(135deg, #059669 0%, #047857 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 10px 30px rgba(16, 185, 129, 0.6);
+        }
+
+        .start-btn:disabled {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(255, 255, 255, 0.1);
+          color: #94a3b8;
         }
 
         .waiting-message {
-          color: #94a3b8;
+          color: #cbd5e1;
+          font-size: 1.05rem;
+          font-weight: 600;
           font-style: italic;
-          font-size: 1rem;
+          padding: 1rem;
         }
       `}</style>
     </div>

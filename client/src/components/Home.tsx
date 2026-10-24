@@ -9,7 +9,7 @@ interface HomeProps {
   error: string;
 }
 
-const QUICK_AVATARS = ['🦊', '🤖', '🐱', '🐼', '🦁', '🧙', '🥷', '👑'];
+const QUICK_AVATARS = ['🦊', '🤖', '🐱', '🐼', '🦁', '👑', '🧙', '🥷', '🚀', '🔥', '💎', '😎'];
 
 export default function Home({ onCreateRoom, onJoinRoom, error }: HomeProps) {
   const [playerName, setPlayerName] = useState('');
@@ -42,6 +42,16 @@ export default function Home({ onCreateRoom, onJoinRoom, error }: HomeProps) {
 
   return (
     <div className="home-page">
+      {/* Background ambient lighting */}
+      <div className="home-ambient-glow glow-1" />
+      <div className="home-ambient-glow glow-2" />
+
+      {/* Decorative floating cards in background */}
+      <div className="floating-card-bg card-float-1">🃏</div>
+      <div className="floating-card-bg card-float-2">👑</div>
+      <div className="floating-card-bg card-float-3">⚡</div>
+      <div className="floating-card-bg card-float-4">🔥</div>
+
       <div className="home-container">
         {/* Top cosmetics shortcut */}
         <div className="home-top-bar">
@@ -53,17 +63,24 @@ export default function Home({ onCreateRoom, onJoinRoom, error }: HomeProps) {
               setIsCosmeticsOpen(true);
             }}
           >
-            🎨 Ngoại Trang & Themes
+            🎨 Tùy Chỉnh Ngoại Trang & Themes
           </button>
         </div>
 
-        <div className="logo-badge">🃏 3TLPJ</div>
-        <h1 className="game-title">UNO Online Realtime</h1>
-        <p className="game-subtitle">Chơi bài ma thuật cùng bạn bè mọi lúc mọi nơi!</p>
+        <div className="brand-header">
+          <span className="logo-badge">🔥 3TLPJ CASINO & CARD ARENA</span>
+          <h1 className="game-title">UNO REALTIME</h1>
+          <p className="game-subtitle">Đấu trường bài ma thuật trực tuyến đỉnh cao cùng bạn bè & AI!</p>
+        </div>
 
-        {/* Selected Avatar Banner */}
+        {/* Selected Avatar & Customization Showcase */}
         <div className="selected-avatar-banner">
-          <span className="big-avatar">{cosmetics.avatar}</span>
+          <div className="avatar-preview-wrap">
+            <span className="big-avatar">{cosmetics.avatar}</span>
+            <span className="avatar-skin-pill">Skin: {cosmetics.cardSkin.toUpperCase()}</span>
+          </div>
+
+          <span className="avatar-select-label">Chọn Avatar Của Bạn</span>
           <div className="quick-avatars-row">
             {QUICK_AVATARS.map((av) => (
               <button
@@ -71,6 +88,7 @@ export default function Home({ onCreateRoom, onJoinRoom, error }: HomeProps) {
                 type="button"
                 className={`quick-avatar-btn ${cosmetics.avatar === av ? 'active' : ''}`}
                 onClick={() => handleQuickAvatar(av)}
+                title={`Chọn avatar ${av}`}
               >
                 {av}
               </button>
@@ -81,16 +99,16 @@ export default function Home({ onCreateRoom, onJoinRoom, error }: HomeProps) {
         {mode === 'choose' && (
           <div className="mode-choices">
             <button
-              className="btn btn-primary mode-btn"
+              className="btn btn-primary mode-btn create-btn-gradient"
               onClick={() => {
                 playClickSound();
                 setMode('create');
               }}
             >
-              👑 Tạo Phòng Mới (Create Room)
+              👑 Tạo Phòng Mới (Host Room)
             </button>
             <button
-              className="btn btn-secondary mode-btn"
+              className="btn btn-secondary mode-btn join-btn-glass"
               onClick={() => {
                 playClickSound();
                 setMode('join');
@@ -103,9 +121,61 @@ export default function Home({ onCreateRoom, onJoinRoom, error }: HomeProps) {
 
         {mode === 'create' && (
           <form onSubmit={handleCreate} className="form">
-            <h2>Tạo Phòng Mới</h2>
+            <h2>👑 Khởi Tạo Phòng Chơi</h2>
             <div className="form-group">
-              <label htmlFor="playerName">Tên hiển thị của bạn</label>
+              <label htmlFor="playerName">Tên Hiển Thị Của Bạn</label>
+              <input
+                id="playerName"
+                type="text"
+                className="input name-input-lg"
+                placeholder="Nhập tên biệt danh..."
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                maxLength={20}
+                autoFocus
+              />
+            </div>
+            {error && <p className="error-message">{error}</p>}
+            <div className="form-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  playClickSound();
+                  setMode('choose');
+                }}
+              >
+                ← Quay lại
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={!playerName.trim()}
+              >
+                Tạo Phòng Ngay 🚀
+              </button>
+            </div>
+          </form>
+        )}
+
+        {mode === 'join' && (
+          <form onSubmit={handleJoin} className="form">
+            <h2>🚀 Tham Gia Phòng Chơi</h2>
+            <div className="form-group">
+              <label htmlFor="roomCode">Mã Phòng (6 ký tự)</label>
+              <input
+                id="roomCode"
+                type="text"
+                className="input room-code-input"
+                placeholder="VD: ABC123"
+                value={roomCode}
+                onChange={(e) => setRoomCode(e.target.value)}
+                maxLength={6}
+                autoFocus
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="playerName">Tên Hiển Thị Của Bạn</label>
               <input
                 id="playerName"
                 type="text"
@@ -114,7 +184,6 @@ export default function Home({ onCreateRoom, onJoinRoom, error }: HomeProps) {
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
                 maxLength={20}
-                autoFocus
               />
             </div>
             {error && <p className="error-message">{error}</p>}
@@ -127,65 +196,14 @@ export default function Home({ onCreateRoom, onJoinRoom, error }: HomeProps) {
                   setMode('choose');
                 }}
               >
-                Quay lại
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={!playerName.trim()}
-              >
-                Tạo Phòng
-              </button>
-            </div>
-          </form>
-        )}
-
-        {mode === 'join' && (
-          <form onSubmit={handleJoin} className="form">
-            <h2>Vào Phòng Chơi</h2>
-            <div className="form-group">
-              <label htmlFor="roomCode">Mã phòng (6 ký tự)</label>
-              <input
-                id="roomCode"
-                type="text"
-                className="input room-code-input"
-                placeholder="ABC123"
-                value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                maxLength={6}
-                autoFocus
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="playerNameJoin">Tên của bạn</label>
-              <input
-                id="playerNameJoin"
-                type="text"
-                className="input"
-                placeholder="Nhập biệt danh của bạn..."
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                maxLength={20}
-              />
-            </div>
-            {error && <p className="error-message">{error}</p>}
-            <div className="form-actions">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  playClickSound();
-                  setMode('choose');
-                }}
-              >
-                Quay lại
+                ← Quay lại
               </button>
               <button
                 type="submit"
                 className="btn btn-primary"
                 disabled={!playerName.trim() || !roomCode.trim()}
               >
-                Tham Gia
+                Vào Phòng Chơi 🎲
               </button>
             </div>
           </form>
@@ -195,7 +213,7 @@ export default function Home({ onCreateRoom, onJoinRoom, error }: HomeProps) {
       <CosmeticsModal
         isOpen={isCosmeticsOpen}
         onClose={() => setIsCosmeticsOpen(false)}
-        onCosmeticsChange={(updated) => setCosmetics(updated)}
+        onCosmeticsChange={(up) => setCosmetics(up)}
       />
 
       <style>{`
@@ -204,173 +222,284 @@ export default function Home({ onCreateRoom, onJoinRoom, error }: HomeProps) {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 1.5rem;
-          background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+          padding: 2rem 1.5rem;
+          background: radial-gradient(circle at 50% 30%, #1e1b4b 0%, #090d16 80%);
+          position: relative;
+          overflow: hidden;
         }
 
+        .home-ambient-glow {
+          position: absolute;
+          width: 500px;
+          height: 500px;
+          border-radius: 50%;
+          filter: blur(120px);
+          opacity: 0.35;
+          pointer-events: none;
+        }
+
+        .glow-1 {
+          top: -100px;
+          left: -100px;
+          background: #6366f1;
+        }
+
+        .glow-2 {
+          bottom: -100px;
+          right: -100px;
+          background: #f43f5e;
+        }
+
+        .floating-card-bg {
+          position: absolute;
+          font-size: 5rem;
+          opacity: 0.12;
+          pointer-events: none;
+          user-select: none;
+        }
+
+        .card-float-1 { top: 12%; left: 10%; animation: floatSlow 7s infinite ease-in-out; }
+        .card-float-2 { bottom: 15%; left: 8%; animation: floatSlow 9s infinite ease-in-out reverse; }
+        .card-float-3 { top: 15%; right: 12%; animation: floatSlow 8s infinite ease-in-out; }
+        .card-float-4 { bottom: 12%; right: 10%; animation: floatSlow 6s infinite ease-in-out reverse; }
+
         .home-container {
-          background: rgba(30, 41, 59, 0.7);
-          backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          border-radius: 24px;
-          padding: 2.5rem 2rem;
-          max-width: 460px;
+          background: rgba(15, 23, 42, 0.75);
+          backdrop-filter: blur(24px);
+          border: 1.5px solid rgba(255, 255, 255, 0.14);
+          border-radius: 28px;
+          padding: 2.75rem 2.25rem;
+          max-width: 500px;
           width: 100%;
           text-align: center;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+          box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.15);
           position: relative;
+          z-index: 10;
         }
 
         .home-top-bar {
           display: flex;
           justify-content: flex-end;
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.75rem;
         }
 
         .cosmetics-pill-btn {
-          background: rgba(99, 102, 241, 0.2);
+          background: rgba(99, 102, 241, 0.18);
           border: 1px solid rgba(99, 102, 241, 0.4);
           color: #c7d2fe;
-          padding: 0.35rem 0.85rem;
+          padding: 0.4rem 1rem;
           border-radius: 999px;
-          font-size: 0.8rem;
+          font-size: 0.85rem;
           font-weight: 700;
           cursor: pointer;
           transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
         }
 
         .cosmetics-pill-btn:hover {
           background: #4f46e5;
           color: white;
-          transform: scale(1.05);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(99, 102, 241, 0.5);
+        }
+
+        .brand-header {
+          margin-bottom: 1.5rem;
         }
 
         .logo-badge {
           display: inline-block;
-          background: #ef4444;
+          background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
           color: white;
           font-weight: 900;
-          font-size: 0.85rem;
-          padding: 0.25rem 0.75rem;
+          font-size: 0.75rem;
+          padding: 0.3rem 0.85rem;
           border-radius: 999px;
-          letter-spacing: 0.05em;
-          margin-bottom: 0.5rem;
-          box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+          letter-spacing: 0.08em;
+          margin-bottom: 0.6rem;
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+          border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .game-title {
-          font-size: 2.2rem;
+          font-size: 2.8rem;
           font-weight: 900;
-          color: #f8fafc;
-          letter-spacing: -0.02em;
-          margin-bottom: 0.25rem;
+          letter-spacing: -0.03em;
+          line-height: 1.1;
+          margin-bottom: 0.35rem;
+          background: linear-gradient(135deg, #f43f5e 0%, #fbbf24 50%, #60a5fa 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          filter: drop-shadow(0 4px 14px rgba(244, 63, 94, 0.35));
         }
 
         .game-subtitle {
           color: #94a3b8;
           font-size: 0.95rem;
-          margin-bottom: 1.5rem;
+          line-height: 1.4;
         }
 
         .selected-avatar-banner {
           display: flex;
           flex-direction: column;
           align-items: center;
-          margin-bottom: 1.75rem;
-          background: rgba(0, 0, 0, 0.25);
-          padding: 1rem;
-          border-radius: 16px;
+          margin-bottom: 2rem;
+          background: rgba(0, 0, 0, 0.3);
+          padding: 1.25rem 1rem;
+          border-radius: 20px;
           border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .avatar-preview-wrap {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-bottom: 0.75rem;
         }
 
         .big-avatar {
-          font-size: 3.2rem;
+          font-size: 3.8rem;
           line-height: 1;
+          margin-bottom: 0.4rem;
+          filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
+          animation: floatSlow 3s infinite ease-in-out;
+        }
+
+        .avatar-skin-pill {
+          font-size: 0.75rem;
+          font-weight: 800;
+          color: #fbbf24;
+          background: rgba(251, 191, 36, 0.15);
+          border: 1px solid rgba(251, 191, 36, 0.3);
+          padding: 0.15rem 0.6rem;
+          border-radius: 999px;
+          letter-spacing: 0.05em;
+        }
+
+        .avatar-select-label {
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          font-weight: 700;
+          color: #64748b;
+          letter-spacing: 0.08em;
           margin-bottom: 0.5rem;
-          filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
-          animation: float 2.5s infinite ease-in-out;
         }
 
         .quick-avatars-row {
           display: flex;
-          gap: 0.4rem;
+          gap: 0.45rem;
           flex-wrap: wrap;
           justify-content: center;
         }
 
         .quick-avatar-btn {
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          border-radius: 8px;
-          font-size: 1.25rem;
-          width: 36px;
-          height: 36px;
+          background: rgba(255, 255, 255, 0.06);
+          border: 1.5px solid rgba(255, 255, 255, 0.12);
+          border-radius: 10px;
+          font-size: 1.35rem;
+          width: 40px;
+          height: 40px;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: transform 0.15s ease, border-color 0.15s ease;
+          transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .quick-avatar-btn:hover {
-          transform: scale(1.15);
+          transform: translateY(-4px) scale(1.15);
+          background: rgba(255, 255, 255, 0.15);
           border-color: #60a5fa;
         }
 
         .quick-avatar-btn.active {
           border-color: #fbbf24;
-          background: rgba(251, 191, 36, 0.2);
-          transform: scale(1.12);
+          background: rgba(251, 191, 36, 0.25);
+          box-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+          transform: translateY(-2px) scale(1.15);
         }
 
         .mode-choices {
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          gap: 1.15rem;
         }
 
         .mode-btn {
           width: 100%;
-          padding: 1rem;
-          font-size: 1.05rem;
-          border-radius: 12px;
+          padding: 1.15rem;
+          font-size: 1.1rem;
+          border-radius: 16px;
+        }
+
+        .create-btn-gradient {
+          background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+          box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .create-btn-gradient:hover {
+          box-shadow: 0 10px 30px rgba(99, 102, 241, 0.6);
+        }
+
+        .join-btn-glass {
+          background: rgba(255, 255, 255, 0.08);
+          border: 1.5px solid rgba(255, 255, 255, 0.2);
         }
 
         .form {
           text-align: left;
+          animation: fadeIn 0.25s ease-out;
         }
 
         .form h2 {
-          margin-bottom: 1.25rem;
+          margin-bottom: 1.5rem;
           text-align: center;
-          font-size: 1.35rem;
+          font-size: 1.5rem;
+          font-weight: 800;
+          color: #f8fafc;
         }
 
         .form-group {
-          margin-bottom: 1.25rem;
+          margin-bottom: 1.35rem;
         }
 
         .form-group label {
           display: block;
           margin-bottom: 0.5rem;
-          font-weight: 600;
+          font-weight: 700;
           font-size: 0.9rem;
           color: #cbd5e1;
         }
 
+        .name-input-lg {
+          font-size: 1.05rem;
+          padding: 0.95rem 1.25rem;
+        }
+
         .room-code-input {
           text-align: center;
-          font-size: 1.5rem;
-          letter-spacing: 0.25em;
+          font-size: 1.8rem;
+          letter-spacing: 0.3em;
           text-transform: uppercase;
           font-family: monospace;
-          font-weight: 800;
+          font-weight: 900;
+          color: #fbbf24;
+          background: rgba(0, 0, 0, 0.4);
+          border-color: rgba(251, 191, 36, 0.4);
+        }
+
+        .room-code-input:focus {
+          border-color: #fbbf24;
+          box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.3);
         }
 
         .form-actions {
           display: flex;
           gap: 1rem;
-          margin-top: 1.5rem;
+          margin-top: 1.75rem;
         }
 
         .form-actions .btn {
@@ -379,15 +508,24 @@ export default function Home({ onCreateRoom, onJoinRoom, error }: HomeProps) {
 
         .error-message {
           color: #ef4444;
-          font-size: 0.85rem;
-          margin-top: 0.5rem;
+          font-size: 0.9rem;
+          margin-top: 0.65rem;
           text-align: center;
-          font-weight: 600;
+          font-weight: 700;
+          background: rgba(239, 68, 68, 0.12);
+          border: 1px solid rgba(239, 68, 68, 0.3);
+          padding: 0.5rem;
+          border-radius: 8px;
         }
 
-        @keyframes float {
+        @keyframes floatSlow {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-6px); }
+          50% { transform: translateY(-8px); }
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

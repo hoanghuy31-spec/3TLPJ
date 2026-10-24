@@ -437,41 +437,54 @@ export default function GameBoard({
 
       {/* CENTER ARENA (DECK & DISCARD PILE) */}
       <section className="center-arena">
-        {/* Draw Pile */}
-        <div className="pile-container draw-pile-container">
-          <span className="pile-title">Xấp Bài Rút</span>
-          <div
-            className={`deck-stack ${isMyTurn ? 'can-draw' : ''}`}
-            onClick={handleDrawCard}
-            title={isMyTurn ? 'Click để rút bài' : 'Chờ đến lượt của bạn'}
-          >
-            <Card faceDown size="lg" isPlayable={isMyTurn} skin={mySkin} />
-            <span className="deck-count-overlay">{gameState.deck.length} lá</span>
-          </div>
-          {isMyTurn && (
-            <button className="btn btn-secondary draw-btn" onClick={handleDrawCard}>
-              Rút Bài
-            </button>
-          )}
-        </div>
-
-        {/* Discard Pile */}
-        <div className="pile-container discard-pile-container">
-          <div className="discard-header">
-            <span className="pile-title">Bài Đang Đánh</span>
+        <div className="arena-pedestal">
+          {/* Draw Pile */}
+          <div className="pile-container draw-pile-container">
+            <span className="pile-title">Xấp Bài Rút</span>
             <div
-              className="active-color-pill"
-              style={{ backgroundColor: currentColorInfo.bg }}
+              className={`deck-stack ${isMyTurn ? 'can-draw' : ''}`}
+              onClick={handleDrawCard}
+              title={isMyTurn ? 'Click để rút bài' : 'Chờ đến lượt của bạn'}
             >
-              Màu Hiện Tại: {currentColorInfo.name}
+              {/* Multi-card 3D stacked layers */}
+              <div className="deck-under-layer layer-2" />
+              <div className="deck-under-layer layer-1" />
+              <Card faceDown size="lg" isPlayable={isMyTurn} skin={mySkin} />
+              <span className="deck-count-overlay">{gameState.deck.length} lá</span>
             </div>
-          </div>
-          <div className="discard-top-slot">
-            {topCard ? (
-              <Card card={topCard} size="lg" />
-            ) : (
-              <div className="empty-pile">Chưa có bài</div>
+            {isMyTurn && (
+              <button className="btn btn-secondary draw-btn pulse-glow-btn" onClick={handleDrawCard}>
+                📥 Rút Bài (+1)
+              </button>
             )}
+          </div>
+
+          {/* Active Color Gem Indicator */}
+          <div className="color-gem-center">
+            <div
+              className="color-gem-orb"
+              style={{
+                backgroundColor: currentColorInfo.bg,
+                boxShadow: `0 0 30px ${currentColorInfo.bg}, 0 0 10px #ffffff, inset 0 2px 5px rgba(255, 255, 255, 0.7)`,
+              }}
+            />
+            <span className="color-gem-label">
+              Màu: <strong>{currentColorInfo.name}</strong>
+            </span>
+          </div>
+
+          {/* Discard Pile */}
+          <div className="pile-container discard-pile-container">
+            <div className="discard-header">
+              <span className="pile-title">Bài Đang Đánh</span>
+            </div>
+            <div className="discard-top-slot">
+              {topCard ? (
+                <Card card={topCard} size="lg" />
+              ) : (
+                <div className="empty-pile">Chưa có bài</div>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -902,8 +915,96 @@ export default function GameBoard({
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 4rem;
           padding: 1.5rem;
+          position: relative;
+        }
+
+        .arena-pedestal {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 3.5rem;
+          background: rgba(15, 23, 42, 0.65);
+          backdrop-filter: blur(24px);
+          border: 1.5px solid rgba(255, 255, 255, 0.16);
+          border-radius: 40px;
+          padding: 1.75rem 3.5rem;
+          box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+          position: relative;
+        }
+
+        .deck-under-layer {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          border-radius: 16px;
+          background: #090d16;
+          border: 2.5px solid rgba(255, 255, 255, 0.15);
+          pointer-events: none;
+        }
+
+        .deck-under-layer.layer-1 {
+          top: 3px;
+          left: 3px;
+          z-index: 1;
+        }
+
+        .deck-under-layer.layer-2 {
+          top: 6px;
+          left: 6px;
+          z-index: 0;
+        }
+
+        .color-gem-center {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .color-gem-orb {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          border: 3px solid #ffffff;
+          animation: gemFloat 3s infinite ease-in-out;
+        }
+
+        .color-gem-label {
+          font-size: 0.85rem;
+          font-weight: 800;
+          color: #f8fafc;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          background: rgba(0, 0, 0, 0.5);
+          padding: 0.25rem 0.85rem;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .pulse-glow-btn {
+          animation: pulseGlow 1.8s infinite;
+          background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+          border-color: #a5b4fc;
+        }
+
+        @keyframes gemFloat {
+          0%, 100% {
+            transform: translateY(0) scale(1);
+          }
+          50% {
+            transform: translateY(-5px) scale(1.08);
+          }
+        }
+
+        @keyframes pulseGlow {
+          0%, 100% {
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+          }
+          50% {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.8);
+          }
         }
 
         .pile-container {

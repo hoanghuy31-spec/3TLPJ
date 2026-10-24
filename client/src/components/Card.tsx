@@ -11,12 +11,37 @@ interface CardProps {
   skin?: string;
 }
 
-const COLOR_MAP: Record<CardColor, { bg: string; border: string; glow: string }> = {
-  red: { bg: '#e11d48', border: '#be123c', glow: 'rgba(225, 29, 72, 0.6)' },
-  blue: { bg: '#2563eb', border: '#1d4ed8', glow: 'rgba(37, 99, 235, 0.6)' },
-  green: { bg: '#059669', border: '#047857', glow: 'rgba(5, 150, 105, 0.6)' },
-  yellow: { bg: '#d97706', border: '#b45309', glow: 'rgba(217, 119, 6, 0.6)' },
-  black: { bg: '#18181b', border: '#3f3f46', glow: 'rgba(251, 191, 36, 0.6)' },
+const COLOR_MAP: Record<CardColor, { bg: string; border: string; glow: string; text: string }> = {
+  red: {
+    bg: 'linear-gradient(145deg, #ff2a5f 0%, #c80036 100%)',
+    border: '#ffe4e6',
+    glow: 'rgba(255, 42, 95, 0.65)',
+    text: '#c80036',
+  },
+  blue: {
+    bg: 'linear-gradient(145deg, #3b82f6 0%, #1d4ed8 100%)',
+    border: '#dbeafe',
+    glow: 'rgba(59, 130, 246, 0.65)',
+    text: '#1d4ed8',
+  },
+  green: {
+    bg: 'linear-gradient(145deg, #10b981 0%, #047857 100%)',
+    border: '#d1fae5',
+    glow: 'rgba(16, 185, 129, 0.65)',
+    text: '#047857',
+  },
+  yellow: {
+    bg: 'linear-gradient(145deg, #f59e0b 0%, #b45309 100%)',
+    border: '#fef3c7',
+    glow: 'rgba(245, 158, 11, 0.65)',
+    text: '#b45309',
+  },
+  black: {
+    bg: 'linear-gradient(145deg, #27272a 0%, #09090b 100%)',
+    border: '#fef08a',
+    glow: 'rgba(251, 191, 36, 0.65)',
+    text: '#18181b',
+  },
 };
 
 export default function Card({
@@ -44,13 +69,14 @@ export default function Card({
         <div
           className="card-back-pattern"
           style={{
-            backgroundColor: activeSkin.bg,
+            background: activeSkin.bg,
             borderColor: activeSkin.border,
           }}
         >
+          <div className="card-back-inner-glow" />
           <span className="uno-back-logo">UNO</span>
         </div>
-        <div className="card-sheen" />
+        <div className="card-glass-glare" />
         <style>{cardStyles}</style>
       </div>
     );
@@ -85,19 +111,21 @@ export default function Card({
       } ${onClick && isPlayable ? 'clickable' : ''}`}
       onClick={isPlayable ? onClick : undefined}
       style={{
-        backgroundColor: colorStyle.bg,
-        borderColor: isPlayable ? '#fbbf24' : colorStyle.border,
+        background: colorStyle.bg,
       }}
     >
-      {/* 3D Glass Sheen reflection */}
-      <div className="card-sheen" />
+      {/* Dynamic Glass Glare Sheen */}
+      <div className="card-glass-glare" />
+
+      {/* Subtle Inner Border Line */}
+      <div className="card-inner-rim" />
 
       {/* Corner indicator: top-left */}
       <div className="corner corner-tl">
         <span>{symbol}</span>
       </div>
 
-      {/* Center oval */}
+      {/* Center oval badge */}
       <div className={`center-oval ${color === 'black' ? 'wild-oval' : ''}`}>
         {color === 'black' ? (
           <div className="wild-badge">
@@ -108,7 +136,7 @@ export default function Card({
             <span className="wild-symbol">{symbol}</span>
           </div>
         ) : (
-          <span className="center-value" style={{ color: colorStyle.bg }}>
+          <span className="center-value" style={{ color: colorStyle.text }}>
             {symbol}
           </span>
         )}
@@ -127,39 +155,53 @@ export default function Card({
 const cardStyles = `
   .uno-card {
     position: relative;
-    border-radius: 14px;
-    border: 3px solid;
+    border-radius: 16px;
+    border: 3.5px solid rgba(255, 255, 255, 0.85);
     user-select: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.35);
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease, border-color 0.2s ease;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.4);
     flex-shrink: 0;
     overflow: hidden;
   }
 
-  .card-sheen {
+  .card-inner-rim {
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 11px;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .card-glass-glare {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.08) 45%, transparent 60%);
+    background: linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.45) 0%,
+      rgba(255, 255, 255, 0.12) 35%,
+      transparent 55%
+    );
     pointer-events: none;
-    border-radius: 11px;
-    z-index: 5;
+    z-index: 8;
   }
 
   .size-sm {
-    width: 50px;
-    height: 75px;
-    border-radius: 8px;
+    width: 52px;
+    height: 78px;
+    border-radius: 10px;
+    border-width: 2.5px;
   }
   .size-md {
-    width: 82px;
-    height: 124px;
+    width: 86px;
+    height: 130px;
   }
   .size-lg {
-    width: 108px;
-    height: 162px;
+    width: 114px;
+    height: 172px;
   }
 
   .uno-card.clickable {
@@ -168,94 +210,100 @@ const cardStyles = `
 
   .uno-card.playable {
     cursor: pointer;
-    box-shadow: 0 0 18px rgba(251, 191, 36, 0.9), 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.9), 0 8px 18px rgba(0, 0, 0, 0.4);
     border-color: #fbbf24 !important;
-    animation: playableGlow 2s infinite alternate;
+    animation: playablePulse 1.8s infinite alternate;
   }
 
   .uno-card.playable:hover {
-    transform: translateY(-16px) scale(1.08) rotate(1deg);
-    box-shadow: 0 14px 28px rgba(251, 191, 36, 1), 0 6px 16px rgba(0, 0, 0, 0.5);
-    border-color: #ffffff !important;
-    z-index: 25;
-  }
-
-  .uno-card.selected {
-    transform: translateY(-20px) scale(1.1) rotate(-1deg);
-    box-shadow: 0 16px 32px rgba(251, 191, 36, 1);
+    transform: translateY(-18px) scale(1.08) rotate(1deg);
+    box-shadow: 0 16px 34px rgba(251, 191, 36, 1), 0 0 10px #ffffff;
     border-color: #ffffff !important;
     z-index: 30;
   }
 
+  .uno-card.selected {
+    transform: translateY(-24px) scale(1.12);
+    box-shadow: 0 20px 40px rgba(251, 191, 36, 1);
+    border-color: #ffffff !important;
+    z-index: 35;
+  }
+
   .uno-card.face-down {
-    background: #0f172a;
+    background: #090d16;
     border-color: #334155;
   }
 
   .uno-card.skin-cyber {
-    background: #022c43;
-    box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.5), 0 8px 18px rgba(0, 0, 0, 0.5);
   }
 
   .uno-card.skin-luxury {
-    background: #271a00;
-    box-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
+    box-shadow: 0 0 16px rgba(251, 191, 36, 0.5), 0 8px 18px rgba(0, 0, 0, 0.5);
   }
 
   .uno-card.skin-obsidian {
-    background: #09090b;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
   }
 
   .uno-card.skin-galaxy {
-    background: #2e0854;
-    box-shadow: 0 0 14px rgba(192, 132, 252, 0.5);
+    box-shadow: 0 0 18px rgba(192, 132, 252, 0.6), 0 8px 18px rgba(0, 0, 0, 0.5);
   }
 
   .card-back-pattern {
     width: 84%;
     height: 84%;
-    border: 2px solid #ffffff;
-    border-radius: 9px;
+    border: 2.5px solid rgba(255, 255, 255, 0.85);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     transform: rotate(-15deg);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35);
+    box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.45), 0 3px 8px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-back-inner-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
   }
 
   .uno-back-logo {
     color: #fbbf24;
     font-weight: 900;
-    font-size: 1.25rem;
+    font-size: 1.4rem;
     font-style: italic;
     letter-spacing: -0.05em;
-    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
+    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 0 0 10px rgba(251, 191, 36, 0.8);
+    position: relative;
+    z-index: 2;
   }
 
   .corner {
     position: absolute;
     color: #ffffff;
     font-weight: 900;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
     z-index: 6;
   }
 
-  .size-sm .corner { font-size: 0.7rem; }
-  .size-lg .corner { font-size: 1.25rem; }
+  .size-sm .corner { font-size: 0.75rem; }
+  .size-lg .corner { font-size: 1.35rem; }
 
   .corner-tl {
-    top: 6px;
+    top: 7px;
     left: 8px;
   }
 
   .corner-br {
-    bottom: 6px;
+    bottom: 7px;
     right: 8px;
     transform: rotate(180deg);
   }
@@ -265,24 +313,24 @@ const cardStyles = `
     height: 74%;
     background: #ffffff;
     border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-    transform: rotate(-25deg);
+    transform: rotate(-24deg);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.25), 0 3px 6px rgba(0, 0, 0, 0.2);
     z-index: 4;
   }
 
   .center-value {
     font-weight: 900;
-    font-size: 2.3rem;
+    font-size: 2.5rem;
     font-style: italic;
-    transform: rotate(25deg);
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+    transform: rotate(24deg);
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.15);
   }
 
-  .size-sm .center-value { font-size: 1.35rem; }
-  .size-lg .center-value { font-size: 3.2rem; }
+  .size-sm .center-value { font-size: 1.45rem; }
+  .size-lg .center-value { font-size: 3.4rem; }
 
   .wild-badge {
     position: relative;
@@ -293,12 +341,13 @@ const cardStyles = `
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
     overflow: hidden;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
   }
 
-  .wild-quadrant.q-red { background: #e11d48; }
-  .wild-quadrant.q-blue { background: #2563eb; }
-  .wild-quadrant.q-yellow { background: #d97706; }
-  .wild-quadrant.q-green { background: #059669; }
+  .wild-quadrant.q-red { background: #ef4444; }
+  .wild-quadrant.q-blue { background: #3b82f6; }
+  .wild-quadrant.q-yellow { background: #f59e0b; }
+  .wild-quadrant.q-green { background: #10b981; }
 
   .wild-symbol {
     position: absolute;
@@ -308,18 +357,20 @@ const cardStyles = `
     justify-content: center;
     color: #ffffff;
     font-weight: 900;
-    font-size: 1.7rem;
+    font-size: 1.8rem;
     font-style: italic;
-    transform: rotate(25deg);
-    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.85);
+    transform: rotate(24deg);
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.9);
   }
 
-  @keyframes playableGlow {
+  @keyframes playablePulse {
     from {
-      box-shadow: 0 0 12px rgba(251, 191, 36, 0.7);
+      box-shadow: 0 0 14px rgba(251, 191, 36, 0.7), 0 4px 12px rgba(0, 0, 0, 0.3);
+      border-color: #fbbf24;
     }
     to {
-      box-shadow: 0 0 22px rgba(251, 191, 36, 1), 0 0 6px #ffffff;
+      box-shadow: 0 0 26px rgba(251, 191, 36, 1), 0 0 8px #ffffff, 0 8px 20px rgba(0, 0, 0, 0.5);
+      border-color: #ffffff;
     }
   }
 `;
