@@ -138,6 +138,7 @@ export interface ClientToServerEvents {
   'room:leave': () => void;
   'room:ready': (data: { ready: boolean }) => void;
   'room:kick': (data: { playerId: string }) => void;
+  'room:bot-add': () => void;
   'room:set-theme': (data: { theme: string }) => void;
   'player:update-cosmetics': (data: { avatar?: string; cardSkin?: string }) => void;
   

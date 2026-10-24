@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Card as CardType, CardColor, GameState, Room } from '@uno/shared';
 import { getSocket, SOCKET_EVENTS } from '../socket';
 import Card from './Card';
@@ -131,19 +131,19 @@ export default function GameBoard({
   };
 
   // Handle call UNO (Hô UNO khi còn 1 hoặc 2 lá bài)
-  const handleCallUno = () => {
+  const handleCallUno = useCallback(() => {
     if (myPlayerState?.unoCalled) return;
     playUnoSound();
     socket.emit(SOCKET_EVENTS.UNO_CALL);
     setUnoMessage('BẠN ĐÃ HÔ UNO! 🔥');
     setTimeout(() => setUnoMessage(''), 3000);
-  };
+  }, [myPlayerState?.unoCalled, socket]);
 
   // Handle catch missed UNO (Bắt đối thủ quên hô UNO khi họ còn 1 lá)
-  const handleCatchUno = (targetPlayerId?: string) => {
+  const handleCatchUno = useCallback((targetPlayerId?: string) => {
     playClickSound();
     socket.emit(SOCKET_EVENTS.UNO_CATCH, { targetPlayerId });
-  };
+  }, [socket]);
 
   // Handle chat/command submission (/uno, /bat, /catch, /draw)
   const handleCommandSubmit = (e: React.FormEvent) => {
@@ -229,7 +229,7 @@ export default function GameBoard({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [myPlayerState, opponents]);
+  }, [handleCallUno, handleCatchUno]);
 
   // Check last played card for action banners
   useEffect(() => {
@@ -583,12 +583,12 @@ export default function GameBoard({
         currentRoomTheme={room.theme}
         onThemeChange={(th) => {
           if (room.hostId === playerId) {
-            socket.emit('room:set-theme' as any, { theme: th });
+            socket.emit(SOCKET_EVENTS.ROOM_SET_THEME, { theme: th });
           }
         }}
         onCosmeticsChange={(up) => {
           setCosmetics(up);
-          socket.emit('player:update-cosmetics' as any, {
+          socket.emit(SOCKET_EVENTS.PLAYER_UPDATE_COSMETICS, {
             avatar: up.avatar,
             cardSkin: up.cardSkin,
           });

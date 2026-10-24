@@ -65,18 +65,18 @@ export default function Lobby({
 
   const handleAddBot = () => {
     playClickSound();
-    getSocket().emit('room:bot-add' as any);
+    getSocket().emit(SOCKET_EVENTS.ROOM_BOT_ADD);
   };
 
   const handleThemeChange = (themeId: string) => {
     if (isHost) {
-      getSocket().emit('room:set-theme' as any, { theme: themeId });
+      getSocket().emit(SOCKET_EVENTS.ROOM_SET_THEME, { theme: themeId });
     }
   };
 
   const handleCosmeticsChange = (cosmetics: UserCosmetics) => {
     onUpdateCosmetics?.(cosmetics);
-    getSocket().emit('player:update-cosmetics' as any, {
+    getSocket().emit(SOCKET_EVENTS.PLAYER_UPDATE_COSMETICS, {
       avatar: cosmetics.avatar,
       cardSkin: cosmetics.cardSkin,
     });

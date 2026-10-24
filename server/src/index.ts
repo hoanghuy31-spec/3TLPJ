@@ -1,6 +1,4 @@
 import {
-  type Card,
-  type CardColor,
   type ClientToServerEvents,
   GAME_CONFIG,
   type GamePlayer,
@@ -89,7 +87,7 @@ io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
   // Create room
-  socket.on(SOCKET_EVENTS.ROOM_CREATE, ({ playerName, avatar, cardSkin }: any) => {
+  socket.on(SOCKET_EVENTS.ROOM_CREATE, ({ playerName, avatar, cardSkin }: { playerName: string; avatar?: string; cardSkin?: string }) => {
     // Leave current room if any
     const currentRoomId = playerToRoom.get(socket.id);
     if (currentRoomId) {
@@ -135,7 +133,7 @@ io.on('connection', (socket) => {
   });
 
   // Join room
-  socket.on(SOCKET_EVENTS.ROOM_JOIN, ({ roomCode, playerName, avatar, cardSkin }: any) => {
+  socket.on(SOCKET_EVENTS.ROOM_JOIN, ({ roomCode, playerName, avatar, cardSkin }: { roomCode: string; playerName: string; avatar?: string; cardSkin?: string }) => {
     const code = roomCode.toUpperCase();
     const room = getRoomByCode(code);
 
@@ -209,7 +207,7 @@ io.on('connection', (socket) => {
   });
 
   // Add Bot to room (Host requested)
-  socket.on('room:bot-add' as any, () => {
+  socket.on(SOCKET_EVENTS.ROOM_BOT_ADD, () => {
     const roomId = playerToRoom.get(socket.id);
     if (!roomId) return;
 
@@ -232,7 +230,7 @@ io.on('connection', (socket) => {
   });
 
   // Set room theme (Host only)
-  socket.on('room:set-theme' as any, ({ theme }: { theme: string }) => {
+  socket.on(SOCKET_EVENTS.ROOM_SET_THEME, ({ theme }: { theme: string }) => {
     const roomId = playerToRoom.get(socket.id);
     if (!roomId) return;
     const room = rooms.get(roomId);
@@ -243,7 +241,7 @@ io.on('connection', (socket) => {
   });
 
   // Update player cosmetics
-  socket.on('player:update-cosmetics' as any, ({ avatar, cardSkin }: { avatar?: string; cardSkin?: string }) => {
+  socket.on(SOCKET_EVENTS.PLAYER_UPDATE_COSMETICS, ({ avatar, cardSkin }: { avatar?: string; cardSkin?: string }) => {
     const roomId = playerToRoom.get(socket.id);
     if (!roomId) return;
     const room = rooms.get(roomId);

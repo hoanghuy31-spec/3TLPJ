@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { Card, CardColor, GamePlayer } from '@uno/shared';
+import type { Card, GamePlayer } from '@uno/shared';
 import {
   canPlayCard,
   getPlayableCards,

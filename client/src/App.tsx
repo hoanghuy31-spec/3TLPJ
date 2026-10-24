@@ -136,7 +136,7 @@ function App() {
           playerName: name,
           avatar: avatar || '🧑',
           cardSkin: cardSkin || 'classic',
-        } as any);
+        });
       } catch {
         setError('Không thể kết nối đến máy chủ!');
       }
@@ -155,7 +155,7 @@ function App() {
           playerName: name,
           avatar: avatar || '🧑',
           cardSkin: cardSkin || 'classic',
-        } as any);
+        });
       } catch {
         setError('Không thể kết nối đến máy chủ!');
       }
