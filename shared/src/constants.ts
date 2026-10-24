@@ -140,6 +140,7 @@ export const SOCKET_EVENTS = {
   CARD_PLAY: 'card:play',
   CARD_DRAW: 'card:draw',
   UNO_CALL: 'uno:call',
+  UNO_CATCH: 'uno:catch',
   PING: 'ping',
   
   // Server to Client
@@ -157,6 +158,7 @@ export const SOCKET_EVENTS = {
   CARD_PLAYED: 'card:played',
   CARD_DRAWN: 'card:drawn',
   PLAYER_UNO_CALLED: 'player:uno-called',
+  PLAYER_UNO_CAUGHT: 'player:uno-caught',
   PONG: 'pong',
 } as const;
 

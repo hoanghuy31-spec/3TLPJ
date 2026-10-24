@@ -193,3 +193,32 @@ export function playClickSound() {
   osc.start(now);
   osc.stop(now + 0.05);
 }
+
+
+/**
+ * Âm thanh Bắt Bài UNO (Dramatic double buzzer alert)
+ */
+export function playCatchSound() {
+  if (!isSoundEnabled()) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  [0, 0.15].forEach((offset) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(220, now + offset);
+    osc.frequency.linearRampToValueAtTime(110, now + offset + 0.12);
+
+    gain.gain.setValueAtTime(0.3, now + offset);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.12);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now + offset);
+    osc.stop(now + offset + 0.13);
+  });
+}

@@ -36,6 +36,8 @@ class UnoBot {
     this.socket = null;
     this.myPlayerId = null;
     this.isThinking = false;
+    this.isCatching = false;
+    this.currentGameState = null;
   }
 
   start() {
@@ -72,10 +74,14 @@ class UnoBot {
 
     this.socket.on('game:started', ({ gameState }) => {
       console.log(`[${this.name}] 🎮 Ván bài đã bắt đầu! Đang xem xét lượt chơi...`);
+      this.currentGameState = gameState;
+      this.checkCatchUno(gameState);
       this.checkTurn(gameState);
     });
 
     this.socket.on('game:state-update', ({ gameState }) => {
+      this.currentGameState = gameState;
+      this.checkCatchUno(gameState);
       this.checkTurn(gameState);
     });
 
@@ -91,9 +97,13 @@ class UnoBot {
       }
     });
 
-    this.socket.on('player:uno-called', ({ playerId }) => {
-      const who = playerId === this.myPlayerId ? this.name : 'Đối thủ';
-      console.log(`📢 ${who} vừa HÔ UNO! 🔥`);
+    this.socket.on('player:uno-called', ({ playerId, playerName }) => {
+      const who = playerId === this.myPlayerId ? this.name : (playerName || 'Đối thủ');
+      console.log(`📢 [${who}] vừa HÔ UNO! 🔥`);
+    });
+
+    this.socket.on('player:uno-caught', ({ catcherName, victimName, penaltyCards }) => {
+      console.log(`🚨 [${catcherName}] ĐÃ BẮT BÀI [${victimName}] QUÊN HÔ UNO! Nạn nhân bị phạt rút ${penaltyCards} lá!`);
     });
 
     this.socket.on('game:ended', ({ winner }) => {
@@ -109,6 +119,38 @@ class UnoBot {
     this.socket.on('disconnect', () => {
       console.log(`[${this.name}] Đã ngắt kết nối.`);
     });
+  }
+
+  checkCatchUno(gameState) {
+    if (!gameState || gameState.status !== 'active') return;
+
+    // Tìm xem có đối thủ nào có đúng 1 lá bài mà chưa hô UNO không
+    const missedOpponent = gameState.players.find(
+      (p) => p.id !== this.myPlayerId && p.cards.length === 1 && !p.unoCalled
+    );
+
+    if (missedOpponent && !this.isCatching) {
+      this.isCatching = true;
+      // Thời gian phản xạ của Bot từ 1.2s đến 2.6s để tạo cơ hội cho người thật phản ứng
+      const catchDelay = 1200 + Math.random() * 1400;
+      setTimeout(() => {
+        try {
+          if (this.currentGameState) {
+            const stillMissed = this.currentGameState.players.find(
+              (p) => p.id === missedOpponent.id && p.cards.length === 1 && !p.unoCalled
+            );
+            if (stillMissed) {
+              console.log(
+                `[${this.name}] 🚨 PHÁT HIỆN [${missedOpponent.name}] QUÊN HÔ UNO! ĐANG BẮT BÀI!`
+              );
+              this.socket.emit('uno:catch', { targetPlayerId: missedOpponent.id });
+            }
+          }
+        } finally {
+          this.isCatching = false;
+        }
+      }, catchDelay);
+    }
   }
 
   checkTurn(gameState) {
@@ -142,8 +184,22 @@ class UnoBot {
 
     // 1. Tự động hô UNO khi còn 1 hoặc 2 lá
     if (myCards.length <= 2 && !myPlayer.unoCalled) {
-      this.socket.emit('uno:call');
-      console.log(`[${this.name}] 🚨 ĐÃ HÔ UNO! (Còn ${myCards.length} lá)`);
+      if (this.name.includes('Nobita') && Math.random() < 0.3) {
+        // Nobita lóng ngóng quên hô UNO trong 3 giây -> cơ hội cho người chơi bắt bài!
+        console.log(`[${this.name}] 😅 Nobita luống cuống quên hô UNO...`);
+        setTimeout(() => {
+          if (this.currentGameState) {
+            const p = this.currentGameState.players.find((pl) => pl.id === this.myPlayerId);
+            if (p && !p.unoCalled && p.cards.length <= 2) {
+              this.socket.emit('uno:call');
+              console.log(`[${this.name}] 🚨 HÚ VÍA! ĐÃ KỊP HÔ UNO!`);
+            }
+          }
+        }, 3000);
+      } else {
+        this.socket.emit('uno:call');
+        console.log(`[${this.name}] 🚨 ĐÃ HÔ UNO! (Còn ${myCards.length} lá)`);
+      }
     }
 
     // 2. Tìm tất cả các lá bài hợp lệ

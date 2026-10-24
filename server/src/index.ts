@@ -549,12 +549,79 @@ io.on('connection', (socket) => {
     if (!room || !room.gameState || room.gameState.status !== 'active') return;
 
     const player = room.gameState.players.find((p) => p.id === socket.id);
-    if (player && canCallUno(player)) {
-      player.unoCalled = true;
-      io.to(roomId).emit(SOCKET_EVENTS.PLAYER_UNO_CALLED, { playerId: socket.id });
-      io.to(roomId).emit(SOCKET_EVENTS.GAME_STATE_UPDATE, { gameState: room.gameState });
-      console.log(`Player ${player.name} called UNO!`);
+    if (player) {
+      if (canCallUno(player)) {
+        player.unoCalled = true;
+        io.to(roomId).emit(SOCKET_EVENTS.PLAYER_UNO_CALLED, {
+          playerId: socket.id,
+          playerName: player.name,
+        });
+        io.to(roomId).emit(SOCKET_EVENTS.GAME_STATE_UPDATE, { gameState: room.gameState });
+        console.log(`Player ${player.name} called UNO!`);
+      } else {
+        socket.emit(SOCKET_EVENTS.GAME_ERROR, {
+          message: 'Chỉ có thể hô UNO khi bạn còn 1 hoặc 2 lá bài!',
+        });
+      }
     }
+  });
+
+  // Catch missed UNO (Bắt người khác không hô UNO)
+  socket.on(SOCKET_EVENTS.UNO_CATCH, (data?: { targetPlayerId?: string }) => {
+    const roomId = playerToRoom.get(socket.id);
+    if (!roomId) return;
+
+    const room = rooms.get(roomId);
+    if (!room || !room.gameState || room.gameState.status !== 'active') return;
+
+    const catcher = room.gameState.players.find((p) => p.id === socket.id);
+    if (!catcher) return;
+
+    // Tìm người chơi có 1 lá mà chưa hô UNO (không phải người bắt)
+    const targetPlayerId = data?.targetPlayerId;
+    let victim: GamePlayer | undefined;
+    if (targetPlayerId) {
+      victim = room.gameState.players.find((p) => p.id === targetPlayerId && p.id !== socket.id);
+    } else {
+      victim = room.gameState.players.find((p) => p.id !== socket.id && p.cards.length === 1 && !p.unoCalled);
+    }
+
+    if (!victim || victim.cards.length !== 1 || victim.unoCalled) {
+      socket.emit(SOCKET_EVENTS.GAME_ERROR, {
+        message: 'Không có người chơi nào quên hô UNO để bắt!',
+      });
+      return;
+    }
+
+    // Phạt rút 2 lá bài
+    const gameState = room.gameState;
+    const penaltyCards = 2;
+    for (let i = 0; i < penaltyCards; i++) {
+      if (gameState.deck.length === 0) {
+        const replenished = replenishDeck(gameState.deck, gameState.discardPile);
+        gameState.deck = replenished.newDeck;
+        gameState.discardPile = replenished.newDiscardPile;
+      }
+      if (gameState.deck.length > 0) {
+        const drawn = gameState.deck.shift()!;
+        victim.cards.push(drawn);
+      }
+    }
+
+    victim.unoCalled = false;
+
+    console.log(`[UNO CATCH] ${catcher.name} caught ${victim.name} for not calling UNO! Penalty: ${penaltyCards} cards.`);
+
+    // Thông báo cho toàn phòng
+    io.to(roomId).emit(SOCKET_EVENTS.PLAYER_UNO_CAUGHT, {
+      catcherId: catcher.id,
+      catcherName: catcher.name,
+      victimId: victim.id,
+      victimName: victim.name,
+      penaltyCards,
+    });
+
+    io.to(roomId).emit(SOCKET_EVENTS.GAME_STATE_UPDATE, { gameState });
   });
 
   // Handle disconnect

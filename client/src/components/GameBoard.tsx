@@ -13,6 +13,7 @@ import {
   playUnoSound,
   playWinSound,
   playClickSound,
+  playCatchSound,
 } from '../audio';
 
 interface GameBoardProps {
@@ -36,6 +37,7 @@ export default function GameBoard({
   room,
   gameState,
   playerId,
+  playerName,
   onLeave,
   onBackToLobby,
 }: GameBoardProps) {
@@ -46,6 +48,7 @@ export default function GameBoard({
   );
   const [isCosmeticsOpen, setIsCosmeticsOpen] = useState(false);
   const [cosmetics, setCosmetics] = useState(() => getSavedCosmetics());
+  const [chatInput, setChatInput] = useState('');
   const confettiCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const prevTurnRef = useRef<string | null>(null);
@@ -77,6 +80,89 @@ export default function GameBoard({
     bg: '#e11d48',
   };
 
+  const triggerAlert = (title: string, desc: string, icon: string) => {
+    setActionAlert({ title, desc, icon });
+    const timer = setTimeout(() => setActionAlert(null), 2800);
+    return () => clearTimeout(timer);
+  };
+
+  // Determine playable cards in hand
+  const playableCardIds = myCards
+    .filter((card) => {
+      if (card.color === 'black') return true;
+      if (card.color === gameState.currentColor) return true;
+      if (topCard && card.value === topCard.value) return true;
+      return false;
+    })
+    .map((c) => c.id);
+
+  // Handle playing card
+  const handleCardClick = (card: CardType) => {
+    if (!isMyTurn) return;
+
+    if (card.color === 'black') {
+      playClickSound();
+      setPendingWildCard(card);
+    } else {
+      playCardSound();
+      socket.emit(SOCKET_EVENTS.CARD_PLAY, {
+        cardId: card.id,
+      });
+    }
+  };
+
+  // Handle color selection for wild cards
+  const handleColorSelected = (chosenColor: CardColor) => {
+    if (!pendingWildCard) return;
+
+    playCardSound();
+    socket.emit(SOCKET_EVENTS.CARD_PLAY, {
+      cardId: pendingWildCard.id,
+      chosenColor,
+    });
+    setPendingWildCard(null);
+  };
+
+  // Handle draw card
+  const handleDrawCard = () => {
+    if (!isMyTurn) return;
+    playDrawSound();
+    socket.emit(SOCKET_EVENTS.CARD_DRAW);
+  };
+
+  // Handle call UNO (Hô UNO khi còn 1 hoặc 2 lá bài)
+  const handleCallUno = () => {
+    if (myPlayerState?.unoCalled) return;
+    playUnoSound();
+    socket.emit(SOCKET_EVENTS.UNO_CALL);
+    setUnoMessage('BẠN ĐÃ HÔ UNO! 🔥');
+    setTimeout(() => setUnoMessage(''), 3000);
+  };
+
+  // Handle catch missed UNO (Bắt đối thủ quên hô UNO khi họ còn 1 lá)
+  const handleCatchUno = (targetPlayerId?: string) => {
+    playClickSound();
+    socket.emit(SOCKET_EVENTS.UNO_CATCH, { targetPlayerId });
+  };
+
+  // Handle chat/command submission (/uno, /bat, /catch, /draw)
+  const handleCommandSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cmd = chatInput.trim().toLowerCase();
+    if (!cmd) return;
+
+    if (cmd === '/uno' || cmd === 'uno') {
+      handleCallUno();
+    } else if (cmd === '/bat' || cmd === '/catch' || cmd === 'bat' || cmd === 'catch') {
+      handleCatchUno();
+    } else if (cmd === '/rut' || cmd === '/draw') {
+      handleDrawCard();
+    } else {
+      triggerAlert('💬 Tin nhắn', `${playerName}: ${chatInput}`, '💬');
+    }
+    setChatInput('');
+  };
+
   // Play turn notification sound when turn shifts to player
   useEffect(() => {
     if (currentPlayer && currentPlayer.id !== prevTurnRef.current) {
@@ -86,6 +172,64 @@ export default function GameBoard({
       }
     }
   }, [currentPlayer, playerId]);
+
+  // Listen for UNO call and catch events
+  useEffect(() => {
+    const handleUnoCalled = (data: { playerId: string; playerName?: string }) => {
+      playUnoSound();
+      const p = gameState.players.find((pl) => pl.id === data.playerId);
+      const name = data.playerName || p?.name || 'Một người chơi';
+      triggerAlert('🎉 HÔ UNO!', `${name} chỉ còn lại 1 lá bài!`, '🎉');
+    };
+
+    const handleUnoCaught = (data: {
+      catcherId: string;
+      catcherName: string;
+      victimId: string;
+      victimName: string;
+      penaltyCards: number;
+    }) => {
+      playCatchSound();
+      triggerAlert(
+        '🚨 BẮT BÀI UNO THÀNH CÔNG!',
+        `${data.catcherName} đã bắt ${data.victimName} quên hô UNO! Phạt rút ${data.penaltyCards} lá bài!`,
+        '🚨'
+      );
+    };
+
+    const handleGameError = (data: { message: string }) => {
+      if (data.message && (data.message.includes('UNO') || data.message.includes('bắt'))) {
+        triggerAlert('⚠️ Thông báo UNO', data.message, '⚠️');
+      }
+    };
+
+    socket.on(SOCKET_EVENTS.PLAYER_UNO_CALLED, handleUnoCalled);
+    socket.on(SOCKET_EVENTS.PLAYER_UNO_CAUGHT, handleUnoCaught);
+    socket.on(SOCKET_EVENTS.GAME_ERROR, handleGameError);
+
+    return () => {
+      socket.off(SOCKET_EVENTS.PLAYER_UNO_CALLED, handleUnoCalled);
+      socket.off(SOCKET_EVENTS.PLAYER_UNO_CAUGHT, handleUnoCaught);
+      socket.off(SOCKET_EVENTS.GAME_ERROR, handleGameError);
+    };
+  }, [socket, gameState.players]);
+
+  // Keyboard shortcuts (U: Hô UNO, B hoặc C: Bắt bài)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      if (e.key === 'u' || e.key === 'U') {
+        handleCallUno();
+      } else if (e.key === 'b' || e.key === 'B' || e.key === 'c' || e.key === 'C') {
+        handleCatchUno();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [myPlayerState, opponents]);
 
   // Check last played card for action banners
   useEffect(() => {
@@ -111,12 +255,6 @@ export default function GameBoard({
       runConfetti();
     }
   }, [gameState.status]);
-
-  const triggerAlert = (title: string, desc: string, icon: string) => {
-    setActionAlert({ title, desc, icon });
-    const timer = setTimeout(() => setActionAlert(null), 2500);
-    return () => clearTimeout(timer);
-  };
 
   const runConfetti = () => {
     const canvas = confettiCanvasRef.current;
@@ -173,60 +311,12 @@ export default function GameBoard({
     return () => cancelAnimationFrame(animationId);
   };
 
-  // Determine playable cards in hand
-  const playableCardIds = myCards
-    .filter((card) => {
-      if (card.color === 'black') return true;
-      if (card.color === gameState.currentColor) return true;
-      if (topCard && card.value === topCard.value) return true;
-      return false;
-    })
-    .map((c) => c.id);
-
-  // Handle playing card
-  const handleCardClick = (card: CardType) => {
-    if (!isMyTurn) return;
-
-    if (card.color === 'black') {
-      playClickSound();
-      setPendingWildCard(card);
-    } else {
-      playCardSound();
-      socket.emit(SOCKET_EVENTS.CARD_PLAY, {
-        cardId: card.id,
-      });
-    }
-  };
-
-  // Handle color selection for wild cards
-  const handleColorSelected = (chosenColor: CardColor) => {
-    if (!pendingWildCard) return;
-
-    playCardSound();
-    socket.emit(SOCKET_EVENTS.CARD_PLAY, {
-      cardId: pendingWildCard.id,
-      chosenColor,
-    });
-    setPendingWildCard(null);
-  };
-
-  // Handle draw card
-  const handleDrawCard = () => {
-    if (!isMyTurn) return;
-    playDrawSound();
-    socket.emit(SOCKET_EVENTS.CARD_DRAW);
-  };
-
-  // Handle call UNO
-  const handleCallUno = () => {
-    playUnoSound();
-    socket.emit(SOCKET_EVENTS.UNO_CALL);
-    setUnoMessage('BẠN ĐÃ HÔ UNO! 🔥');
-    setTimeout(() => setUnoMessage(''), 3000);
-  };
-
   const isWinner = gameState.status === 'ended' && myPlayerState?.cards.length === 0;
   const winnerPlayer = gameState.players.find((p) => p.cards.length === 0);
+
+  const isMyUnoUrgent = myCards.length === 1 && !myPlayerState?.unoCalled;
+  const canCatchSomeone = opponents.some((o) => o.cards.length === 1 && !o.unoCalled);
+  const uncalledCount = opponents.filter((o) => o.cards.length === 1 && !o.unoCalled).length;
 
   return (
     <div
@@ -300,10 +390,15 @@ export default function GameBoard({
       <section className="opponents-section">
         {opponents.map((opp) => {
           const isOppTurn = currentPlayer?.id === opp.id;
+          const hasOneCard = opp.cards.length === 1;
+          const isMissedUno = hasOneCard && !opp.unoCalled;
+
           return (
             <div
               key={opp.id}
-              className={`opponent-card ${isOppTurn ? 'active-turn' : ''}`}
+              className={`opponent-card ${isOppTurn ? 'active-turn' : ''} ${
+                isMissedUno ? 'missed-uno-border' : ''
+              }`}
             >
               <div className="opponent-avatar-wrap">
                 <div className={`opponent-avatar ${isOppTurn ? 'ring-active' : ''}`}>
@@ -312,7 +407,8 @@ export default function GameBoard({
                   ) : (
                     opp.name.charAt(0).toUpperCase()
                   )}
-                  {opp.unoCalled && <span className="uno-badge-pill">UNO!</span>}
+                  {opp.unoCalled && <span className="uno-badge-pill safe">UNO! ✓</span>}
+                  {isMissedUno && <span className="uno-badge-pill danger pulse">1 LÁ! ⚠️</span>}
                 </div>
               </div>
               <div className="opponent-details">
@@ -321,8 +417,17 @@ export default function GameBoard({
                   {opp.name.includes('Bot') && <span className="bot-chip">AI</span>}
                 </span>
                 <span className="opponent-cards-count">
-                  🃏 {opp.cards.length} {opp.cards.length === 1 ? 'lá' : 'lá bài'}
+                  🃏 {opp.cards.length} {opp.cards.length === 1 ? 'lá bài' : 'lá bài'}
                 </span>
+                {isMissedUno && (
+                  <button
+                    className="btn btn-catch-mini pulse"
+                    onClick={() => handleCatchUno(opp.id)}
+                    title="Bắt đối thủ này vì quên hô UNO! Phạt rút 2 lá."
+                  >
+                    🚨 Bắt Bài!
+                  </button>
+                )}
               </div>
               {isOppTurn && <span className="thinking-dot">Đang nghĩ...</span>}
             </div>
@@ -379,13 +484,65 @@ export default function GameBoard({
         <div className="player-action-bar">
           <button
             className={`btn btn-uno ${
-              myCards.length <= 2 && !myPlayerState?.unoCalled ? 'pulse' : ''
-            }`}
+              isMyUnoUrgent
+                ? 'urgent pulse'
+                : myCards.length <= 2 && !myPlayerState?.unoCalled
+                ? 'pulse'
+                : ''
+            } ${myPlayerState?.unoCalled ? 'safe' : ''}`}
             onClick={handleCallUno}
-            disabled={myPlayerState?.unoCalled}
+            disabled={myPlayerState?.unoCalled || myCards.length > 2}
+            title="Hô UNO khi còn 1 hoặc 2 lá bài (Phím tắt: U)"
           >
-            {myPlayerState?.unoCalled ? '✓ ĐÃ HÔ UNO!' : 'HÔ UNO! 🔥'}
+            {myPlayerState?.unoCalled
+              ? '✓ ĐÃ HÔ UNO!'
+              : isMyUnoUrgent
+              ? '⚡ HÔ UNO NGAY! (Phím U)'
+              : 'HÔ UNO! 🔥 (Phím U)'}
           </button>
+
+          <button
+            className={`btn btn-catch ${canCatchSomeone ? 'pulse-catch active-target' : ''}`}
+            onClick={() => handleCatchUno()}
+            title="Bắt bài đối thủ quên hô UNO khi còn 1 lá (Phím tắt: B hoặc C)"
+          >
+            🚨 BẮT BÀI UNO! (Phím B)
+            {canCatchSomeone && (
+              <span className="catch-count-badge">{uncalledCount} người quên!</span>
+            )}
+          </button>
+
+          <form className="game-command-form" onSubmit={handleCommandSubmit}>
+            <div className="quick-command-chips">
+              <button
+                type="button"
+                className="chip-btn"
+                onClick={handleCallUno}
+                title="Lệnh nhanh hô UNO"
+              >
+                /uno
+              </button>
+              <button
+                type="button"
+                className="chip-btn"
+                onClick={() => handleCatchUno()}
+                title="Lệnh nhanh bắt bài"
+              >
+                /bat
+              </button>
+            </div>
+            <input
+              type="text"
+              className="command-input"
+              placeholder="Lệnh: /uno, /bat hoặc chat..."
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              maxLength={60}
+            />
+            <button type="submit" className="btn btn-secondary command-submit-btn">
+              Gửi
+            </button>
+          </form>
         </div>
 
         <Hand
@@ -448,7 +605,7 @@ export default function GameBoard({
                     {p.avatar || '👤'} {p.name}
                   </span>
                   <span className="final-p-cards">
-                    {p.cards.length === 0 ? '🏆 Hết bài (Thắng)' : `${p.cards.length} lá còn lại`}
+                    {p.cards.length === 0 ? '🏆 Về Nhất' : `Còn ${p.cards.length} lá bài`}
                   </span>
                 </div>
               ))}
@@ -463,7 +620,7 @@ export default function GameBoard({
                     onBackToLobby();
                   }}
                 >
-                  Về Phòng Chờ (Lobby)
+                  Quay Lại Phòng Chờ
                 </button>
               )}
               <button
@@ -627,6 +784,7 @@ export default function GameBoard({
           border-radius: 14px;
           transition: all 0.25s ease;
           box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+          position: relative;
         }
 
         .opponent-card.active-turn {
@@ -634,6 +792,12 @@ export default function GameBoard({
           box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
           transform: scale(1.06);
           background: rgba(30, 41, 59, 0.9);
+        }
+
+        .missed-uno-border {
+          border-color: #ef4444 !important;
+          box-shadow: 0 0 18px rgba(239, 68, 68, 0.7) !important;
+          animation: redGlow 1s infinite alternate;
         }
 
         .opponent-avatar-wrap {
@@ -661,14 +825,40 @@ export default function GameBoard({
           position: absolute;
           top: -8px;
           right: -12px;
-          background: #ef4444;
           color: #ffffff;
           font-size: 0.65rem;
           font-weight: 900;
           padding: 2px 6px;
           border-radius: 9999px;
           border: 1px solid #ffffff;
-          animation: pulse 1s infinite;
+        }
+
+        .uno-badge-pill.safe {
+          background: #059669;
+          border-color: #6ee7b7;
+        }
+
+        .uno-badge-pill.danger {
+          background: #dc2626;
+          border-color: #fca5a5;
+        }
+
+        .btn-catch-mini {
+          margin-top: 4px;
+          background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+          color: #ffffff;
+          font-size: 0.75rem;
+          font-weight: 800;
+          padding: 3px 8px;
+          border-radius: 6px;
+          border: 1px solid #fca5a5;
+          box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+          cursor: pointer;
+        }
+
+        .btn-catch-mini:hover {
+          transform: scale(1.08);
+          background: #dc2626;
         }
 
         .opponent-details {
@@ -681,14 +871,14 @@ export default function GameBoard({
           font-size: 0.95rem;
           display: flex;
           align-items: center;
-          gap: 0.4rem;
+          gap: 0.35rem;
         }
 
         .bot-chip {
-          background: #3b82f6;
-          color: white;
           font-size: 0.65rem;
-          padding: 1px 4px;
+          background: #3b82f6;
+          color: #ffffff;
+          padding: 1px 5px;
           border-radius: 4px;
           font-weight: 800;
         }
@@ -696,11 +886,12 @@ export default function GameBoard({
         .opponent-cards-count {
           color: #94a3b8;
           font-size: 0.8rem;
+          margin-top: 2px;
         }
 
         .thinking-dot {
+          font-size: 0.75rem;
           color: #fbbf24;
-          font-size: 0.8rem;
           font-style: italic;
           margin-left: 0.5rem;
           animation: pulse 1s infinite;
@@ -711,7 +902,7 @@ export default function GameBoard({
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 5rem;
+          gap: 4rem;
           padding: 1.5rem;
         }
 
@@ -719,32 +910,32 @@ export default function GameBoard({
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.85rem;
+          gap: 0.75rem;
         }
 
         .pile-title {
-          font-size: 0.85rem;
-          font-weight: 800;
-          color: #94a3b8;
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: #cbd5e1;
           text-transform: uppercase;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.05em;
         }
 
         .discard-header {
           display: flex;
+          flex-direction: column;
           align-items: center;
-          gap: 0.85rem;
+          gap: 0.4rem;
         }
 
         .active-color-pill {
-          color: #ffffff;
-          font-weight: 800;
           font-size: 0.8rem;
-          padding: 0.25rem 0.75rem;
-          border-radius: 9999px;
-          text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-          animation: pulse 2s infinite;
+          font-weight: 800;
+          padding: 0.25rem 0.85rem;
+          border-radius: 999px;
+          color: #ffffff;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+          text-shadow: 0 1px 2px rgba(0,0,0,0.5);
         }
 
         .deck-stack {
@@ -812,24 +1003,40 @@ export default function GameBoard({
           align-items: center;
           gap: 1rem;
           padding-top: 0.85rem;
+          flex-wrap: wrap;
+          justify-content: center;
         }
 
         .btn-uno {
           background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
           color: #ffffff;
           font-weight: 900;
-          font-size: 1.15rem;
-          padding: 0.7rem 2.5rem;
+          font-size: 1.05rem;
+          padding: 0.65rem 1.75rem;
           border-radius: 9999px;
-          border: 3px solid #fecdd3;
+          border: 2px solid #fecdd3;
           letter-spacing: 0.05em;
           box-shadow: 0 6px 18px rgba(239, 68, 68, 0.5);
-          transition: transform 0.15s ease;
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
 
         .btn-uno:hover:not(:disabled) {
-          transform: scale(1.08);
+          transform: scale(1.06);
           background: #dc2626;
+        }
+
+        .btn-uno.urgent {
+          background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+          border-color: #fef08a;
+          box-shadow: 0 0 25px rgba(245, 158, 11, 0.8);
+          animation: urgentGlow 0.8s infinite alternate;
+        }
+
+        .btn-uno.safe {
+          background: linear-gradient(135deg, #059669 0%, #047857 100%);
+          border-color: #a7f3d0;
+          opacity: 0.9;
+          cursor: default;
         }
 
         .btn-uno.pulse {
@@ -839,6 +1046,96 @@ export default function GameBoard({
         .btn-uno:disabled {
           opacity: 0.5;
           cursor: not-allowed;
+        }
+
+        .btn-catch {
+          background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+          color: #fee2e2;
+          font-weight: 800;
+          font-size: 1rem;
+          padding: 0.65rem 1.6rem;
+          border-radius: 9999px;
+          border: 2px solid #f87171;
+          box-shadow: 0 4px 15px rgba(185, 28, 28, 0.4);
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          cursor: pointer;
+        }
+
+        .btn-catch:hover {
+          background: #dc2626;
+          color: #ffffff;
+          transform: scale(1.05);
+          box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+        }
+
+        .btn-catch.pulse-catch {
+          background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+          border-color: #fca5a5;
+          animation: catchPulse 1s infinite;
+          box-shadow: 0 0 25px rgba(239, 68, 68, 0.8);
+        }
+
+        .catch-count-badge {
+          background: #ffffff;
+          color: #b91c1c;
+          font-size: 0.75rem;
+          font-weight: 900;
+          padding: 2px 7px;
+          border-radius: 999px;
+        }
+
+        .game-command-form {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: rgba(30, 41, 59, 0.7);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 9999px;
+          padding: 0.25rem 0.5rem 0.25rem 0.75rem;
+        }
+
+        .quick-command-chips {
+          display: flex;
+          gap: 0.25rem;
+        }
+
+        .chip-btn {
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          color: #fbbf24;
+          font-size: 0.75rem;
+          font-weight: 800;
+          padding: 2px 7px;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+
+        .chip-btn:hover {
+          background: rgba(251, 191, 36, 0.25);
+        }
+
+        .command-input {
+          background: transparent;
+          border: none;
+          color: #f8fafc;
+          font-size: 0.85rem;
+          outline: none;
+          width: 220px;
+        }
+
+        .command-input::placeholder {
+          color: #94a3b8;
+          font-size: 0.8rem;
+        }
+
+        .command-submit-btn {
+          font-size: 0.75rem;
+          padding: 0.3rem 0.75rem;
+          border-radius: 999px;
         }
 
         .game-over-overlay {
@@ -858,48 +1155,49 @@ export default function GameBoard({
           border: 2px solid #6366f1;
           border-radius: 24px;
           padding: 2.75rem 2rem;
-          max-width: 500px;
+          max-width: 480px;
           width: 90%;
           text-align: center;
-          box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.5);
-          animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
         }
 
         .trophy-icon {
-          font-size: 4.5rem;
+          font-size: 4rem;
           margin-bottom: 0.5rem;
-          filter: drop-shadow(0 6px 12px rgba(251, 191, 36, 0.5));
+          animation: bounce 1s infinite;
+        }
+
+        .game-over-modal h2 {
+          font-size: 2rem;
+          font-weight: 900;
+          color: #f8fafc;
+          margin-bottom: 0.5rem;
         }
 
         .winner-announce {
-          font-size: 1.35rem;
-          margin: 1rem 0 1.5rem;
+          font-size: 1.15rem;
+          margin-bottom: 1.5rem;
         }
 
         .you-won {
           color: #fbbf24;
           font-weight: 900;
-          font-size: 1.4rem;
         }
 
         .final-players-list {
           display: flex;
           flex-direction: column;
-          gap: 0.65rem;
-          margin-bottom: 2rem;
-          text-align: left;
-          background: rgba(0, 0, 0, 0.35);
-          padding: 1.25rem;
-          border-radius: 14px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          gap: 0.5rem;
+          background: rgba(255, 255, 255, 0.04);
+          padding: 1rem;
+          border-radius: 12px;
+          margin-bottom: 1.75rem;
         }
 
         .final-player-row {
           display: flex;
           justify-content: space-between;
           font-size: 0.95rem;
-          color: #cbd5e1;
-          align-items: center;
         }
 
         .final-p-name {
@@ -917,18 +1215,23 @@ export default function GameBoard({
         }
 
         @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-5px); }
-        }
-
-        @keyframes pulseRing {
-          0%, 100% { box-shadow: 0 0 0 3px #fbbf24; }
-          50% { box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.6); }
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-6px);
+          }
         }
 
         @keyframes slideDown {
-          from { opacity: 0; transform: translate(-50%, -20px); }
-          to { opacity: 1; transform: translate(-50%, 0); }
+          from {
+            opacity: 0;
+            transform: translate(-50%, -20px);
+          }
+          to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+          }
         }
 
         @keyframes fadeIn {
@@ -936,9 +1239,46 @@ export default function GameBoard({
           to { opacity: 1; }
         }
 
-        @keyframes popIn {
-          from { opacity: 0; transform: scale(0.9); }
-          to { opacity: 1; transform: scale(1); }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.08); }
+        }
+
+        @keyframes pulseRing {
+          0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+          70% { box-shadow: 0 0 0 8px rgba(251, 191, 36, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+
+        @keyframes catchPulse {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+          }
+          50% {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.9);
+          }
+        }
+
+        @keyframes urgentGlow {
+          from {
+            transform: scale(1);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+          }
+          to {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.9);
+          }
+        }
+
+        @keyframes redGlow {
+          from {
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+          }
+          to {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+          }
         }
       `}</style>
     </div>

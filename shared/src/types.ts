@@ -121,7 +121,8 @@ export interface ServerToClientEvents {
   'card:drawn': (data: { playerId: string; card: Card }) => void;
   
   // UNO call
-  'player:uno-called': (data: { playerId: string }) => void;
+  'player:uno-called': (data: { playerId: string; playerName?: string }) => void;
+  'player:uno-caught': (data: { catcherId: string; catcherName: string; victimId: string; victimName: string; penaltyCards: number }) => void;
   
   // Ping response
   'pong': () => void;
@@ -152,6 +153,7 @@ export interface ClientToServerEvents {
   
   // UNO call
   'uno:call': () => void;
+  'uno:catch': (data?: { targetPlayerId?: string }) => void;
   
   // Ping
   'ping': () => void;
