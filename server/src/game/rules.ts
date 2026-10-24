@@ -4,177 +4,234 @@
 
 import type { Card, CardColor, GamePlayer } from '@uno/shared';
 import { CARD_POINTS } from '@uno/shared';
+import { shuffleDeck } from './shuffle.js';
 
 // ============================================================
-// TODO M2: VALIDATION FUNCTIONS
+// VALIDATION FUNCTIONS
 // ============================================================
 
 /**
- * TODO M2.1: Validate if a card can be played on top of another card
+ * Validates if a card can be played on top of another card
  * @param playedCard - The card being played
  * @param topCard - The current top card on discard pile
  * @param currentColor - The current active color (after Wild selection)
  * @returns true if the card can be played
  */
 export function canPlayCard(
-  _playedCard: Card,
-  _topCard: Card,
-  _currentColor: CardColor
+  playedCard: Card,
+  topCard: Card,
+  currentColor: CardColor
 ): boolean {
-  // TODO M2.1: Implementation needed
-  // - Same color
-  // - Same value
-  // - Wild card (any time)
-  // - Match current color (for wild cards)
-  return true; // Placeholder
+  // Wild card (Wild, Wild Draw 4) can always be played
+  if (playedCard.color === 'black') {
+    return true;
+  }
+
+  // Matches current active color
+  if (playedCard.color === currentColor) {
+    return true;
+  }
+
+  // Matches top card value (regardless of color)
+  if (playedCard.value === topCard.value) {
+    return true;
+  }
+
+  return false;
 }
 
 /**
- * TODO M2.2: Get all playable cards from a player's hand
+ * Gets all playable cards from a player's hand
  * @param hand - Player's hand
  * @param topCard - Current top card
  * @param currentColor - Current active color
  * @returns Array of playable cards
  */
 export function getPlayableCards(
-  _hand: Card[],
-  _topCard: Card,
-  _currentColor: CardColor
+  hand: Card[],
+  topCard: Card,
+  currentColor: CardColor
 ): Card[] {
-  // TODO M2.2: Filter hand for playable cards
-  return []; // Placeholder
+  return hand.filter((card) => canPlayCard(card, topCard, currentColor));
 }
 
 // ============================================================
-// TODO M2: ACTION CARD EFFECTS
+// TURN & ACTION CARD EFFECTS
 // ============================================================
 
 /**
- * TODO M2.3: Handle Skip card effect
+ * Calculates the next player index taking into account direction and step
+ * @param currentIndex - Current player index
+ * @param playerCount - Total number of players
+ * @param direction - Direction (1 for clockwise, -1 for counter-clockwise)
+ * @param step - Number of steps forward (default: 1)
+ * @returns Next player index
+ */
+export function getNextPlayerIndex(
+  currentIndex: number,
+  playerCount: number,
+  direction: 1 | -1,
+  step: number = 1
+): number {
+  if (playerCount <= 0) return 0;
+  const delta = direction * step;
+  return ((currentIndex + delta) % playerCount + playerCount) % playerCount;
+}
+
+/**
+ * Handles Skip card effect: advances turn past the next player
  * @param currentPlayerIndex - Index of player who played skip
  * @param playerCount - Total number of players
  * @param direction - Current direction (1 or -1)
- * @returns Next player index (same as current, as skip means skip next player)
+ * @returns Next player index (skipping 1 player)
  */
 export function handleSkip(
   currentPlayerIndex: number,
-  _playerCount: number,
-  _direction: 1 | -1
-): number {
-  // TODO M2.3: Skip the next player
-  return currentPlayerIndex; // Placeholder
-}
-
-/**
- * TODO M2.4: Handle Reverse card effect
- * @param playerCount - Number of players
- * @param direction - Current direction
- * @returns New direction
- */
-export function handleReverse(
   playerCount: number,
   direction: 1 | -1
-): 1 | -1 {
-  // TODO M2.4: Reverse direction (in 2-player, acts like Skip)
-  return direction; // Placeholder
+): number {
+  return getNextPlayerIndex(currentPlayerIndex, playerCount, direction, 2);
 }
 
 /**
- * TODO M2.5: Handle Draw 2 card effect
- * @param deck - Current deck
- * @param currentPlayerIndex - Index of player who played Draw 2
- * @returns Number of cards to draw for next player
+ * Handles Reverse card effect
+ * @param playerCount - Number of players
+ * @param direction - Current direction
+ * @returns New direction (inverted)
+ */
+export function handleReverse(
+  _playerCount: number,
+  direction: 1 | -1
+): 1 | -1 {
+  return direction === 1 ? -1 : 1;
+}
+
+/**
+ * Handles Draw 2 card effect
+ * @param _deck - Current deck
+ * @param _currentPlayerIndex - Index of player who played Draw 2
+ * @returns Number of cards to draw for next player (2)
  */
 export function handleDraw2(
   _deck: Card[],
   _currentPlayerIndex: number
 ): number {
-  // TODO M2.5: Next player draws 2 cards
-  return 0; // Placeholder
+  return 2;
 }
 
 /**
- * TODO M2.6: Handle Wild card
+ * Handles Wild card color selection
  * @param chosenColor - Color chosen by player
  * @returns The chosen color
  */
 export function handleWild(chosenColor: CardColor): CardColor {
-  // TODO M2.6: Return the chosen color
+  if (!isPlayableColor(chosenColor)) {
+    throw new Error(`Invalid color chosen: ${chosenColor}`);
+  }
   return chosenColor;
 }
 
 /**
- * TODO M2.7: Handle Wild Draw 4 card
+ * Handles Wild Draw 4 card
  * @param chosenColor - Color chosen by player
- * @returns Number of cards to draw and chosen color
+ * @returns Number of cards to draw (4) and chosen color
  */
-export function handleWildDraw4(chosenColor: CardColor): { drawCount: number; color: CardColor } {
-  // TODO M2.7: Next player draws 4 cards
+export function handleWildDraw4(chosenColor: CardColor): {
+  drawCount: number;
+  color: CardColor;
+} {
+  if (!isPlayableColor(chosenColor)) {
+    throw new Error(`Invalid color chosen: ${chosenColor}`);
+  }
   return { drawCount: 4, color: chosenColor };
 }
 
 // ============================================================
-// TODO M2: UNO CALL VALIDATION
+// UNO CALL VALIDATION
 // ============================================================
 
 /**
- * TODO M2.8: Check if UNO can be called
+ * Checks if UNO can be called by a player
  * @param player - The player who wants to call UNO
- * @returns true if UNO can be called
+ * @returns true if UNO can be called (has 1 or 2 cards and not yet called)
  */
 export function canCallUno(player: GamePlayer): boolean {
-  // TODO M2.8: 
-  // - Player must have exactly 2 cards
-  // - UNO has not been called yet
-  return player.cards.length === 2 && !player.unoCalled;
+  return player.cards.length <= 2 && !player.unoCalled;
 }
 
 /**
- * TODO M2.9: Check for missed UNO call (challenge system)
+ * Checks for missed UNO call (catch system)
  * @param player - The player who may have missed UNO
  * @param wasCalledByOpponent - Whether an opponent called UNO for them
  * @returns true if player should draw penalty cards
  */
 export function checkMissedUno(
-  _player: GamePlayer,
-  _wasCalledByOpponent: boolean
+  player: GamePlayer,
+  wasCalledByOpponent: boolean
 ): boolean {
-  // TODO M2.9:
-  // - If player has 1 card and didn't call UNO, they should draw
-  // - If someone caught them, apply penalty
-  return false; // Placeholder
+  return player.cards.length === 1 && !player.unoCalled && wasCalledByOpponent;
 }
 
 // ============================================================
-// TODO M2: WIN CONDITION
+// WIN CONDITION & SCORING
 // ============================================================
 
 /**
- * TODO M2.10: Check if a player has won (has no cards left)
+ * Checks if a player has won (has no cards left)
  * @param player - The player to check
  * @returns true if player has won
  */
 export function checkWin(player: GamePlayer): boolean {
-  // TODO M2.10: Player wins if they have no cards
   return player.cards.length === 0;
 }
 
 /**
- * TODO M2.11: Calculate score for a round
+ * Calculates score for a round
  * @param winner - The winning player
  * @param players - All players
  * @returns Map of player IDs to their scores
  */
 export function calculateScore(
-  _winner: GamePlayer,
-  _players: GamePlayer[]
+  winner: GamePlayer,
+  players: GamePlayer[]
 ): Map<string, number> {
-  // TODO M2.11:
-  // - Winner gets points for all cards in other players' hands
-  // - Number cards: face value
-  // - Action cards: 20 points
-  // - Wild cards: 50 points
-  return new Map(); // Placeholder
+  const scores = new Map<string, number>();
+  let totalScore = 0;
+
+  for (const player of players) {
+    if (player.id !== winner.id) {
+      totalScore += getHandPoints(player.cards);
+      scores.set(player.id, 0);
+    }
+  }
+
+  scores.set(winner.id, totalScore);
+  return scores;
+}
+
+/**
+ * Replenishes the draw deck from discard pile when deck is low or empty
+ * Keeps top card of discard pile and shuffles the rest into deck
+ * @param deck - Current deck
+ * @param discardPile - Current discard pile
+ * @returns Updated deck and discard pile
+ */
+export function replenishDeck(
+  deck: Card[],
+  discardPile: Card[]
+): { newDeck: Card[]; newDiscardPile: Card[] } {
+  if (discardPile.length <= 1) {
+    return { newDeck: deck, newDiscardPile: discardPile };
+  }
+
+  const topCard = discardPile[discardPile.length - 1];
+  const cardsToShuffle = discardPile.slice(0, -1);
+  const shuffled = shuffleDeck(cardsToShuffle);
+
+  return {
+    newDeck: [...deck, ...shuffled],
+    newDiscardPile: [topCard],
+  };
 }
 
 // ============================================================
@@ -185,7 +242,7 @@ export function calculateScore(
  * Checks if a color is a valid playable color (non-black)
  */
 export function isPlayableColor(color: CardColor): boolean {
-  return color !== 'black';
+  return color === 'red' || color === 'blue' || color === 'green' || color === 'yellow';
 }
 
 /**

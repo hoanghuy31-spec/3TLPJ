@@ -35,65 +35,65 @@
 
 ---
 
-## M1 - Core Game Logic
+## M1 - Core Game Logic (Completed ✅)
 
 ### A - Server/Logic (Game Rules & Turn Management)
 
-- [ ] **M1.A.1** Implement `canPlayCard()` in `server/src/game/rules.ts`
+- [x] **M1.A.1** Implement `canPlayCard()` in `server/src/game/rules.ts`
   - Validate card matching (color, value, or wild)
   - Input: `Card`, `Card`, `CardColor` → Output: `boolean`
 
-- [ ] **M1.A.2** Implement `getPlayableCards()` in `server/src/game/rules.ts`
+- [x] **M1.A.2** Implement `getPlayableCards()` in `server/src/game/rules.ts`
   - Filter playable cards from player's hand
   - Input: `Card[]`, `Card`, `CardColor` → Output: `Card[]`
 
-- [ ] **M1.A.3** Implement action card effects in `server/src/game/rules.ts`
+- [x] **M1.A.3** Implement action card effects in `server/src/game/rules.ts`
   - `handleSkip()`, `handleReverse()`, `handleDraw2()`, `handleWild()`, `handleWildDraw4()`
   - Update game direction and turn skipping logic
 
-- [ ] **M1.A.4** Implement `applyCardEffect()` in `server/src/game/rules.ts`
+- [x] **M1.A.4** Implement `applyCardEffect()` in `server/src/game/rules.ts`
   - Apply effects when cards are played
   - Handle draw pile replenishment
 
-- [ ] **M1.A.5** Implement turn management in `server/src/index.ts`
+- [x] **M1.A.5** Implement turn management in `server/src/index.ts`
   - [x] Initial `game:start` handler (host/readiness checks and round initialization)
   - [ ] Turn validation, `turn:action` handler
   - `card:play`, `card:draw` handlers
 
-- [ ] **M1.A.6** Implement UNO call validation
+- [x] **M1.A.6** Implement UNO call validation
   - Check if player has 1 card, validate UNO call timing
   - Penalize missed UNO calls
 
 ### B - Client/UI (Game Board)
 
-- [ ] **M1.B.1** Create `GameBoard` component in `client/src/components/GameBoard.tsx`
+- [x] **M1.B.1** Create `GameBoard` component in `client/src/components/GameBoard.tsx`
   - Display discard pile, current player indicator
   - Show playable vs non-playable cards
 
-- [ ] **M1.B.2** Create `Card` component in `client/src/components/Card.tsx`
+- [x] **M1.B.2** Create `Card` component in `client/src/components/Card.tsx`
   - Visual card rendering with color and value
   - Draggable for playing cards
 
-- [ ] **M1.B.3** Create `Hand` component in `client/src/components/Hand.tsx`
+- [x] **M1.B.3** Create `Hand` component in `client/src/components/Hand.tsx`
   - Display player's cards, highlight playable cards
   - Handle card selection
 
-- [ ] **M1.B.4** Create `ColorPicker` component in `client/src/components/ColorPicker.tsx`
+- [x] **M1.B.4** Create `ColorPicker` component in `client/src/components/ColorPicker.tsx`
   - Modal for choosing color after playing wild card
 
-- [ ] **M1.B.5** Implement game state socket listeners
+- [x] **M1.B.5** Implement game state socket listeners
   - `game:started`, `game:state-update`, `turn:changed`
   - `card:played`, `card:drawn`
 
 ### C - Integration & Testing
 
-- [ ] **M1.C.1** Add unit tests for `canPlayCard()`
+- [x] **M1.C.1** Add unit tests for `canPlayCard()`
   - Test all card matching scenarios
 
-- [ ] **M1.C.2** Add unit tests for action card effects
+- [x] **M1.C.2** Add unit tests for action card effects
   - Test skip, reverse, draw2, wild, wild_draw4
 
-- [ ] **M1.C.3** Integration test: full game flow
+- [x] **M1.C.3** Integration test: full game flow
   - Test from game start to end
 
 ---

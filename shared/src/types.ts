@@ -34,6 +34,8 @@ export interface Player {
   id: string;         // Socket ID or persistent ID
   name: string;       // Display name
   isReady: boolean;   // Ready status in lobby
+  avatar?: string;    // Avatar emoji or icon (e.g., '🤖', '🦊', '🐱')
+  cardSkin?: string;  // Card back skin (e.g., 'classic', 'cyber', 'luxury')
 }
 
 /**
@@ -46,6 +48,7 @@ export interface Room {
   maxPlayers: number;            // Maximum players allowed (default: 4)
   status: RoomStatus;            // Current room status
   createdAt: number;             // Timestamp when room was created
+  theme?: string;                // Active table/lobby visual theme
   gameState?: GameState;        // Optional active game state once a round starts
 }
 
@@ -75,7 +78,7 @@ export interface GameState {
  */
 export interface GamePlayer extends Player {
   cards: Card[];                 // Cards in hand
- unoCalled: boolean;             // Has called UNO
+  unoCalled: boolean;            // Has called UNO
 }
 
 /**
@@ -129,11 +132,13 @@ export interface ServerToClientEvents {
  */
 export interface ClientToServerEvents {
   // Room events
-  'room:create': (data: { playerName: string }) => void;
-  'room:join': (data: { roomCode: string; playerName: string }) => void;
+  'room:create': (data: { playerName: string; avatar?: string; cardSkin?: string }) => void;
+  'room:join': (data: { roomCode: string; playerName: string; avatar?: string; cardSkin?: string }) => void;
   'room:leave': () => void;
   'room:ready': (data: { ready: boolean }) => void;
   'room:kick': (data: { playerId: string }) => void;
+  'room:set-theme': (data: { theme: string }) => void;
+  'player:update-cosmetics': (data: { avatar?: string; cardSkin?: string }) => void;
   
   // Game events
   'game:start': () => void;

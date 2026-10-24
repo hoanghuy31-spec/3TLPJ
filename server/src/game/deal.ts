@@ -2,7 +2,7 @@
 // DEAL MODULE - Deals cards to players
 // ============================================================
 
-import type { Card, GamePlayer } from '@uno/shared';
+import type { Card, GamePlayer, Player } from '@uno/shared';
 import { GAME_CONFIG } from '@uno/shared';
 
 /**
@@ -45,7 +45,7 @@ export function dealCards(
  * @returns Array of GamePlayer objects
  */
 export function createGamePlayers(
-  players: { id: string; name: string }[],
+  players: (Player | { id: string; name: string; avatar?: string; cardSkin?: string })[],
   hands: Map<string, Card[]>
 ): GamePlayer[] {
   return players.map((player) => ({
@@ -54,6 +54,8 @@ export function createGamePlayers(
     isReady: false,
     cards: hands.get(player.id) || [],
     unoCalled: false,
+    avatar: player.avatar,
+    cardSkin: player.cardSkin,
   }));
 }
 
@@ -85,7 +87,7 @@ export function drawCards(
  */
 export function initializeRound(
   shuffledDeck: Card[],
-  players: { id: string; name: string }[]
+  players: Player[]
 ): {
   gamePlayers: GamePlayer[];
   deck: Card[];
@@ -101,17 +103,9 @@ export function initializeRound(
 
   const gamePlayers = createGamePlayers(players, hands);
 
-  // First card goes to discard pile (reshuffle if it's a black card)
+  // First card goes to discard pile
   const firstCard = remainingDeck[0];
   const deckAfterDiscard = remainingDeck.slice(1);
-
-  // TODO M2: Handle special first cards (e.g., Wild Draw 4)
-  // For now, just reshuffle if it's a wild card
-  // while (firstCard.color === 'black') {
-  //   deckAfterDiscard = shuffleDeck([...deckAfterDiscard, firstCard]);
-  //   firstCard = deckAfterDiscard[0];
-  //   deckAfterDiscard = deckAfterDiscard.slice(1);
-  // }
 
   return {
     gamePlayers,

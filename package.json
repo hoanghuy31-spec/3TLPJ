@@ -13,6 +13,7 @@
     "build": "npm run build --workspace=shared && npm run build --workspace=server && npm run build --workspace=client",
     "test": "npm run build --workspace=shared && npm run test --workspace=shared && npm run test --workspace=server && npm run test --workspace=client",
     "lint": "npm run lint --workspace=shared && npm run lint --workspace=server && npm run lint --workspace=client",
+    "bot": "node client/test-bots.js",
     "clean": "rm -rf node_modules */node_modules dist"
   },
   "devDependencies": {

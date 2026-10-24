@@ -6,10 +6,10 @@ import { GAME_CONFIG } from '@uno/shared';
 
 describe('Deal Module', () => {
   const players = [
-    { id: 'player-1', name: 'Alice' },
-    { id: 'player-2', name: 'Bob' },
-    { id: 'player-3', name: 'Charlie' },
-    { id: 'player-4', name: 'Diana' },
+    { id: 'player-1', name: 'Alice', isReady: false },
+    { id: 'player-2', name: 'Bob', isReady: false },
+    { id: 'player-3', name: 'Charlie', isReady: false },
+    { id: 'player-4', name: 'Diana', isReady: false },
   ];
 
   describe('dealCards', () => {
