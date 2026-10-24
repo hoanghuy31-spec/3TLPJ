@@ -108,7 +108,7 @@ export interface ServerToClientEvents {
   'room:player-left': (data: { playerId: string }) => void;
   
   // Game events
-  'game:started': (data: { gameState: GameState }) => void;
+  'game:started': (data: { gameState: GameState; firstPlayerName?: string; firstPlayerId?: string }) => void;
   'game:state-update': (data: { gameState: GameState }) => void;
   'game:ended': (data: { winner: Player; gameState: GameState }) => void;
   'game:error': (data: { message: string }) => void;

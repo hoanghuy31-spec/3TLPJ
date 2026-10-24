@@ -222,3 +222,59 @@ export function playCatchSound() {
     osc.stop(now + offset + 0.13);
   });
 }
+
+/**
+ * Âm thanh Đổ Xúc Xắc / Chọn ngẫu nhiên (Rolling dice clatter)
+ */
+export function playDiceSound() {
+  if (!isSoundEnabled()) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const clicks = [0, 0.04, 0.09, 0.15, 0.22, 0.31, 0.42, 0.55];
+  clicks.forEach((time, index) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = index === clicks.length - 1 ? 'sine' : 'triangle';
+    const freq = index === clicks.length - 1 ? 880 : 350 + Math.random() * 300;
+    osc.frequency.setValueAtTime(freq, now + time);
+
+    gain.gain.setValueAtTime(0.2, now + time);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + time + (index === clicks.length - 1 ? 0.3 : 0.04));
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now + time);
+    osc.stop(now + time + (index === clicks.length - 1 ? 0.32 : 0.05));
+  });
+}
+
+/**
+ * Âm thanh Đổi Chiều (Swooshing reverse bend)
+ */
+export function playReverseSound() {
+  if (!isSoundEnabled()) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(400, now);
+  osc.frequency.exponentialRampToValueAtTime(200, now + 0.12);
+  osc.frequency.exponentialRampToValueAtTime(600, now + 0.25);
+
+  gain.gain.setValueAtTime(0.25, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.29);
+}

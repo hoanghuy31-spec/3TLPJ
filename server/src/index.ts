@@ -297,6 +297,10 @@ io.on('connection', (socket) => {
     // Initial color should be playable (red/blue/green/yellow)
     const initialColor = isPlayableColor(firstCard.color) ? firstCard.color : 'red';
 
+    // Randomize starting player
+    const initialPlayerIndex = Math.floor(Math.random() * gamePlayers.length);
+    const firstPlayer = gamePlayers[initialPlayerIndex];
+
     // Update status
     room.status = 'playing';
     room.gameState = {
@@ -304,7 +308,7 @@ io.on('connection', (socket) => {
       deck: remainingDeck,
       discardPile,
       players: gamePlayers,
-      currentPlayerIndex: 0,
+      currentPlayerIndex: initialPlayerIndex,
       direction: 1,
       currentColor: initialColor,
       status: 'active',
@@ -312,9 +316,15 @@ io.on('connection', (socket) => {
       lastPlayedCard: firstCard,
     };
 
-    io.to(roomId).emit(SOCKET_EVENTS.GAME_STARTED, { gameState: room.gameState });
+    io.to(roomId).emit(SOCKET_EVENTS.GAME_STARTED, {
+      gameState: room.gameState,
+      firstPlayerName: firstPlayer.name,
+      firstPlayerId: firstPlayer.id,
+    });
     io.to(roomId).emit(SOCKET_EVENTS.ROOM_UPDATED, { room });
-    console.log(`Game started in room ${roomId}`);
+    console.log(
+      `Game started in room ${roomId} - First player randomly selected: ${firstPlayer.name} (${firstPlayer.id})`
+    );
   });
 
   // Play a card
