@@ -12,7 +12,7 @@ export const GAME_CONFIG = {
   INITIAL_HAND_SIZE: 7,
   
   /** Maximum players allowed in a room */
-  MAX_PLAYERS: 4,
+  MAX_PLAYERS: 10,
   
   /** Minimum players required to start game */
   MIN_PLAYERS: 2,

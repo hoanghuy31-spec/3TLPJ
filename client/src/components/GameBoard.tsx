@@ -35,7 +35,16 @@ const COLOR_NAMES: Record<CardColor, { name: string; bg: string; glow: string }>
   black: { name: 'Wild', bg: '#1e293b', glow: 'rgba(255, 255, 255, 0.4)' },
 };
 
-type SeatPosition = 'left' | 'top' | 'right' | 'top-left' | 'top-right';
+type SeatPosition =
+  | 'left'
+  | 'left-top'
+  | 'left-bottom'
+  | 'top'
+  | 'top-left'
+  | 'top-right'
+  | 'right'
+  | 'right-top'
+  | 'right-bottom';
 
 export default function GameBoard({
   room,
@@ -236,6 +245,15 @@ export default function GameBoard({
     const handleGameError = (data: { message: string }) => {
       if (data.message && (data.message.includes('UNO') || data.message.includes('bắt'))) {
         triggerAlert('⚠️ Thông báo UNO', data.message, '⚠️');
+      } else if (
+        data.message &&
+        (data.message.includes('xào lại') ||
+          data.message.includes('Xấp bài') ||
+          data.message.includes('cạn') ||
+          data.message.includes('mới'))
+      ) {
+        playDrawSound();
+        triggerAlert('🔄 XÀO LẠI BÀI!', data.message, '🔄');
       }
     };
 
@@ -352,28 +370,45 @@ export default function GameBoard({
     }
   }, [gameState.status]);
 
-  // Seating arrangement calculations around the Steam Oval Table
+  // Seating arrangement calculations around the Steam Oval Table (Supports 2 - 10 players)
   const myIndex = gameState.players.findIndex((p) => p.id === playerId);
   const totalPlayers = gameState.players.length;
+  const opponentCount = totalPlayers - 1;
 
   const relativeOpponents: { player: (typeof gameState.players)[0]; seat: SeatPosition }[] = [];
   for (let i = 1; i < totalPlayers; i++) {
     const oppIdx = (myIndex + i) % totalPlayers;
     const opp = gameState.players[oppIdx];
-    const count = totalPlayers - 1;
 
     let seat: SeatPosition = 'top';
-    if (count === 1) {
+    if (opponentCount === 1) {
       seat = 'top';
-    } else if (count === 2) {
+    } else if (opponentCount === 2) {
       seat = i === 1 ? 'left' : 'right';
-    } else if (count === 3) {
+    } else if (opponentCount === 3) {
       if (i === 1) seat = 'left';
       else if (i === 2) seat = 'top';
       else seat = 'right';
+    } else if (opponentCount === 4) {
+      if (i === 1) seat = 'left';
+      else if (i === 2) seat = 'top-left';
+      else if (i === 3) seat = 'top-right';
+      else seat = 'right';
+    } else if (opponentCount === 5) {
+      const p5: SeatPosition[] = ['left-bottom', 'left-top', 'top', 'right-top', 'right-bottom'];
+      seat = p5[i - 1] || 'top';
+    } else if (opponentCount === 6) {
+      const p6: SeatPosition[] = ['left-bottom', 'left-top', 'top-left', 'top-right', 'right-top', 'right-bottom'];
+      seat = p6[i - 1] || 'top';
+    } else if (opponentCount === 7) {
+      const p7: SeatPosition[] = ['left-bottom', 'left', 'left-top', 'top', 'right-top', 'right', 'right-bottom'];
+      seat = p7[i - 1] || 'top';
+    } else if (opponentCount === 8) {
+      const p8: SeatPosition[] = ['left-bottom', 'left', 'left-top', 'top-left', 'top-right', 'right-top', 'right', 'right-bottom'];
+      seat = p8[i - 1] || 'top';
     } else {
-      const positions: SeatPosition[] = ['left', 'top-left', 'top', 'top-right', 'right'];
-      seat = positions[(i - 1) % positions.length];
+      const p9: SeatPosition[] = ['left-bottom', 'left', 'left-top', 'top-left', 'top', 'top-right', 'right-top', 'right', 'right-bottom'];
+      seat = p9[(i - 1) % p9.length];
     }
 
     relativeOpponents.push({ player: opp, seat });
@@ -508,7 +543,7 @@ export default function GameBoard({
       )}
 
       {/* MAIN 3D STEAM ARENA STADIUM */}
-      <main className="steam-stadium-arena">
+      <main className={`steam-stadium-arena ${totalPlayers > 4 ? "many-players" : ""}`}>
         {/* OPPONENT PODS AROUND THE TABLE */}
         {relativeOpponents.map(({ player: opp, seat }) => {
           const isOppTurn = currentPlayer?.id === opp.id;
@@ -1138,31 +1173,74 @@ export default function GameBoard({
         }
 
         .steam-seat-pod.seat-top {
-          top: 1rem;
+          top: 0.8rem;
           left: 50%;
           transform: translateX(-50%);
         }
 
         .steam-seat-pod.seat-left {
-          left: 2rem;
+          left: 1.5rem;
           top: 48%;
           transform: translateY(-50%);
+        }
+
+        .steam-seat-pod.seat-left-top {
+          left: 1.5rem;
+          top: 12%;
+        }
+
+        .steam-seat-pod.seat-left-bottom {
+          left: 1.5rem;
+          bottom: 12%;
         }
 
         .steam-seat-pod.seat-right {
-          right: 2rem;
+          right: 1.5rem;
           top: 48%;
           transform: translateY(-50%);
         }
 
+        .steam-seat-pod.seat-right-top {
+          right: 1.5rem;
+          top: 12%;
+        }
+
+        .steam-seat-pod.seat-right-bottom {
+          right: 1.5rem;
+          bottom: 12%;
+        }
+
         .steam-seat-pod.seat-top-left {
-          top: 2rem;
-          left: 12%;
+          top: 1rem;
+          left: 20%;
         }
 
         .steam-seat-pod.seat-top-right {
-          top: 2rem;
-          right: 12%;
+          top: 1rem;
+          right: 20%;
+        }
+
+        /* Compact sizing for 5 to 10 player matches */
+        .many-players .seat-pod-card {
+          padding: 0.45rem 0.65rem;
+          min-width: 145px;
+          gap: 0.5rem;
+          border-radius: 12px;
+        }
+
+        .many-players .avatar-frame {
+          width: 38px;
+          height: 38px;
+          font-size: 1.25rem;
+        }
+
+        .many-players .seat-player-name {
+          max-width: 75px;
+          font-size: 0.82rem;
+        }
+
+        .many-players .seat-card-count {
+          font-size: 0.72rem;
         }
 
         /* Seat spotlight cone */

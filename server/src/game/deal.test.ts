@@ -166,7 +166,7 @@ describe('Deal Module', () => {
     });
 
     it('should have correct max players', () => {
-      expect(GAME_CONFIG.MAX_PLAYERS).toBe(4);
+      expect(GAME_CONFIG.MAX_PLAYERS).toBe(10);
     });
 
     it('should have correct min players', () => {

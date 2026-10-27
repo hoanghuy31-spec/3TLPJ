@@ -2,6 +2,7 @@ import {
   type ClientToServerEvents,
   GAME_CONFIG,
   type GamePlayer,
+  type GameState,
   type Player,
   type Room,
   type ServerToClientEvents,
@@ -26,7 +27,6 @@ import {
   handleReverse,
   isPlayableColor,
   isWildCard,
-  replenishDeck,
 } from './game/rules.js';
 import { shuffleDeck } from './game/shuffle.js';
 
@@ -84,6 +84,32 @@ function getRoomByCode(code: string): Room | undefined {
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
+  // Helper: Reshuffle discard pile into draw deck when deck is depleted (Reset bài khi rút hết bài)
+  const ensureDeckCards = (gameState: GameState, roomId: string) => {
+    if (gameState.deck.length === 0) {
+      if (gameState.discardPile.length > 1) {
+        const topCard = gameState.discardPile[gameState.discardPile.length - 1];
+        const cardsToShuffle = gameState.discardPile.slice(0, -1);
+        const shuffled = shuffleDeck(cardsToShuffle);
+        gameState.deck = shuffled;
+        gameState.discardPile = [topCard];
+        console.log(`[DECK RESET] Room ${roomId}: Reshuffled ${shuffled.length} cards from discard pile into draw deck.`);
+        io.to(roomId).emit(SOCKET_EVENTS.GAME_STATE_UPDATE, { gameState });
+        io.to(roomId).emit(SOCKET_EVENTS.GAME_ERROR, {
+          message: '🔄 Xấp bài rút đã hết! Hệ thống đã tự động gom và xào lại các lá bài đã đánh.',
+        });
+      } else {
+        const freshDeck = shuffleDeck(createDeck());
+        gameState.deck = freshDeck;
+        console.log(`[DECK RESET] Room ${roomId}: Generated fresh 108-card deck because all cards are in players hands.`);
+        io.to(roomId).emit(SOCKET_EVENTS.GAME_STATE_UPDATE, { gameState });
+        io.to(roomId).emit(SOCKET_EVENTS.GAME_ERROR, {
+          message: '🔄 Toàn bộ bài đã cạn! Hệ thống đã tạo xấp bài mới để tiếp tục ván đấu.',
+        });
+      }
+    }
+  };
+
   console.log(`Client connected: ${socket.id}`);
 
   // Create room
@@ -222,7 +248,8 @@ io.on('connection', (socket) => {
       scriptPath = path.resolve(process.cwd(), '../client/test-bots.js');
     }
 
-    fork(scriptPath, [roomId, '1'], {
+    const botOffset = room.players.filter((p) => p.name.includes('Bot')).length;
+    fork(scriptPath, [roomId, '1', botOffset.toString()], {
       env: { ...process.env, VITE_SERVER_URL: `http://localhost:${PORT}` },
       stdio: 'inherit',
     });
@@ -401,11 +428,7 @@ io.on('connection', (socket) => {
     // Helper: draw cards for a target player with automatic replenishment
     const drawForPlayer = (count: number, player: GamePlayer) => {
       for (let i = 0; i < count; i++) {
-        if (gameState.deck.length === 0) {
-          const replenished = replenishDeck(gameState.deck, gameState.discardPile);
-          gameState.deck = replenished.newDeck;
-          gameState.discardPile = replenished.newDiscardPile;
-        }
+        ensureDeckCards(gameState, roomId);
         if (gameState.deck.length > 0) {
           const drawn = gameState.deck.shift()!;
           player.cards.push(drawn);
@@ -516,14 +539,10 @@ io.on('connection', (socket) => {
       return;
     }
 
-    if (gameState.deck.length === 0) {
-      const replenished = replenishDeck(gameState.deck, gameState.discardPile);
-      gameState.deck = replenished.newDeck;
-      gameState.discardPile = replenished.newDiscardPile;
-    }
+    ensureDeckCards(gameState, roomId);
 
     if (gameState.deck.length === 0) {
-      socket.emit(SOCKET_EVENTS.GAME_ERROR, { message: 'No cards left to draw' });
+      socket.emit(SOCKET_EVENTS.GAME_ERROR, { message: 'Không còn bài để rút!' });
       return;
     }
 
@@ -605,11 +624,7 @@ io.on('connection', (socket) => {
     const gameState = room.gameState;
     const penaltyCards = 2;
     for (let i = 0; i < penaltyCards; i++) {
-      if (gameState.deck.length === 0) {
-        const replenished = replenishDeck(gameState.deck, gameState.discardPile);
-        gameState.deck = replenished.newDeck;
-        gameState.discardPile = replenished.newDiscardPile;
-      }
+      ensureDeckCards(gameState, roomId);
       if (gameState.deck.length > 0) {
         const drawn = gameState.deck.shift()!;
         victim.cards.push(drawn);

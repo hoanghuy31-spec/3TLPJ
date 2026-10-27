@@ -455,9 +455,12 @@ export default function Lobby({
         }
 
         .players-list {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+          gap: 0.85rem;
+          max-height: 480px;
+          overflow-y: auto;
+          padding-right: 0.35rem;
         }
 
         .player-card {

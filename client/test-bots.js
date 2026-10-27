@@ -2,7 +2,8 @@ import { io } from 'socket.io-client';
 
 // Lấy tham số từ dòng lệnh
 const roomCode = (process.argv[2] || '').trim().toUpperCase();
-const botCount = Math.min(Math.max(parseInt(process.argv[3] || '3', 10) || 3, 1), 3);
+const botCount = Math.min(Math.max(parseInt(process.argv[3] || '1', 10) || 1, 1), 9);
+const profileOffset = parseInt(process.argv[4] || '0', 10) || 0;
 const serverUrl = process.env.VITE_SERVER_URL || 'http://localhost:3001';
 
 if (!roomCode) {
@@ -23,6 +24,10 @@ const BOT_PROFILES = [
   { name: 'Bot Xuka 🎀', avatar: '👧', cardSkin: 'galaxy', delay: 1200, motto: 'Mọi người chơi vui vẻ nha!' },
   { name: 'Bot Chaien 🎤', avatar: '🦁', cardSkin: 'luxury', delay: 1700, motto: 'Đỡ lấy lá Draw 2 của đại ca!' },
   { name: 'Bot Xeko 🦊', avatar: '🦊', cardSkin: 'obsidian', delay: 1300, motto: 'Xem lá Skip của ta đây!' },
+  { name: 'Bot Dekisugi 🎓', avatar: '🧑‍🎓', cardSkin: 'emerald', delay: 1000, motto: 'Chiến thuật tính bài của tớ là chuẩn xác.' },
+  { name: 'Bot Doremi 🐱', avatar: '🐱', cardSkin: 'ruby', delay: 1250, motto: 'Anh Mon cố lên nhé!' },
+  { name: 'Bot Jaiko 🎨', avatar: '👩‍🎨', cardSkin: 'gold', delay: 1400, motto: 'Tác phẩm UNO tuyệt đỉnh!' },
+  { name: 'Bot Pikachu ⚡', avatar: '⚡', cardSkin: 'neon', delay: 1150, motto: 'Pika Pika! Đánh bài siêu tốc!' },
 ];
 
 class UnoBot {
@@ -261,7 +266,7 @@ class UnoBot {
 
 // Khởi chạy các bot với khoảng cách 500ms
 for (let i = 0; i < botCount; i++) {
-  const profile = BOT_PROFILES[i % BOT_PROFILES.length];
+  const profile = BOT_PROFILES[(profileOffset + i) % BOT_PROFILES.length];
   setTimeout(() => {
     const bot = new UnoBot(profile, roomCode);
     bot.start();
